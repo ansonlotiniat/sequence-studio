@@ -228,7 +228,7 @@ const questions = {
       return { ...number(`每年${timing}存入 MOP ${payment}，年利率 ${rate}%，每年複利一次，共 ${n} 年。第 ${n} 年年末的終值是多少澳門元？`, answer,
         [`同以第 ${n} 年年末估值。第一筆生息 ${n - 1 + Number(due)} 年，最後一筆生息 ${Number(due)} 年。`,
           i === 0 ? `零利率直接相加本金：${n} × ${payment} = ${c.sum}。` : `化百分比為小數 i = ${i}。先把各筆搬到同一時點再加：${money(c.values[0])}${n > 2 ? ' + ⋯ + ' : n === 2 ? ' + ' : ''}${n > 1 ? money(c.last) : ''}。`,
-          `保留中間精度，最後四捨五入：MOP ${displayedTotal} → MOP ${money(answer)}。`],
+          Number.isInteger(total) ? `終值已是整數澳門元：MOP ${money(answer)}，不需四捨五入。` : `保留中間精度，最後四捨五入：MOP ${displayedTotal} → MOP ${money(answer)}。`],
         [`這是${timing}存款；先標出最後一筆到第 ${n} 年年末相隔多少年。`, '用 P(1+i) 的適當次方算各筆終值；零利率只累計本金。'],
         [[alternate, `你可能用了另一種存款時點；題目指定每年${timing}。`]], 'integer'), scenario: c.params };
     },

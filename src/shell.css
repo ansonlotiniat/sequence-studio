@@ -101,6 +101,8 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 .practice-panel .hint-content { background: #edf3e6; color: #425d35; }
 .lab-layout { align-items: start; gap: 20px; grid-template-columns: minmax(0,1fr) 270px; }
 .controls-panel { padding: 20px; border-color: #d5e0ca; border-radius: 14px; background: #fff; }
+.lab-layout > .visual-panel { grid-column: 1; grid-row: 1; }
+.lab-layout > .controls-panel { grid-column: 2; grid-row: 1; }
 .control-heading { font-size: 14px; color: #31572f; gap: 10px; }
 .control-tag { font-size: 10px; color: #34622d; }
 .controls-panel > p { font-size: 12px; color: #5b7150; margin-bottom: 20px; }
@@ -118,6 +120,9 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 .stat-box { background: #eaf1df; border-color: #d4e1c5; padding: 16px; }
 .stat-box > span { font-size: 12px; color: #46623a; }
 .stat-box small { color: #4f6b42; font-size: 12px; }
+.stat-box strong, .sum-stat strong { white-space: nowrap; overflow-wrap: normal; }
+.controls-panel:has(.checkbox-label) .stat-box strong { font-size: 24px; }
+.sum-stat { flex-wrap: wrap; gap: 6px 12px; }
 .sum-stat > span { font-size: 12px; color: #506c43; }
 .sum-stat strong { color: #436531; }
 .observe-note strong { font-size: 13px; color: #446436; }
@@ -151,6 +156,7 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 @media (min-width: 1280px) {
   .tutor-open .main-shell { margin-right: var(--tutor-width); }
   .tutor-open .lab-layout { grid-template-columns: minmax(0,1fr); }
+  .tutor-open .lab-layout > .visual-panel, .tutor-open .lab-layout > .controls-panel { grid-column: auto; grid-row: auto; }
   .tutor-open .controls-panel { order: -1; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 24px; }
   .tutor-open .controls-panel .control-heading { grid-column: 1; }
   .tutor-open .controls-panel > p { grid-column: 1; }
@@ -173,6 +179,8 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
   .path-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .school-label { display: none; }
   .lab-layout { grid-template-columns: minmax(0,1fr); }
+  .lab-layout > .visual-panel, .lab-layout > .controls-panel { grid-column: auto; grid-row: auto; }
+  .lab-layout > .controls-panel { order: -1; }
   .controls-panel { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 24px; }
   .controls-panel .control-heading { grid-column: 1; }
   .controls-panel .stat-box { grid-column: 2; grid-row: 1/5; margin: 0; }
@@ -246,6 +254,15 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
   .number-control input { width: 100%; }
   .checkbox-label { grid-column: 1/-1; margin: 0; }
   .app-shell .controls-panel .observe-note { grid-column: 1/-1; grid-row: 6; margin-top: 0; padding-top: 10px; }
+  /* A configurable sequence can produce a long decimal or currency amount.
+     Give it a whole row rather than splitting a number between lines. */
+  .app-shell .controls-panel:has(.extra-controls) .term-control { grid-column: 1/-1; display: flex; justify-content: space-between; }
+  .app-shell .controls-panel:has(.extra-controls) .range { grid-column: 1/-1; }
+  .app-shell .controls-panel:has(.extra-controls) .stat-box { grid-column: 1/-1; grid-row: 4; }
+  .app-shell .controls-panel:has(.extra-controls) .stat-box strong { font-size: clamp(22px, 6vw, 30px); }
+  .app-shell .controls-panel:has(.extra-controls) .sum-stat { grid-row: 5; }
+  .app-shell .controls-panel:has(.extra-controls) .extra-controls { grid-row: 6; }
+  .app-shell .controls-panel:has(.extra-controls) .observe-note { grid-row: 7; }
   .observe-note p { font-size: 12px; }
   .observe-note strong { font-size: 12px; }
   .learning-help { padding: 20px; gap: 12px; flex-wrap: wrap; margin-top: 24px; }

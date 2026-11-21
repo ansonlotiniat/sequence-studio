@@ -50,3 +50,16 @@ test('stored draft, scenario and valid chapter URL resume; old progress is explo
   const legacy = { getItem: key => key === 'sequence-progress' ? '["square","other"]' : null };
   assert.deepEqual(readStudy(legacy).chapters, { square: { explored: true } });
 });
+
+test('new skills reopen completed practice without discarding earned skill evidence', () => {
+  const id = 'square', exam = startPractice(id);
+  const saved = { version: 1, location: { id, page: 'quiz' }, experiments: {},
+    chapters: { square: { explored: true, passedAt: 100, reviewAt: 200,
+      practice: { ...exam, skill: 2, finished: true, variants: [1, 1, 0], independent: [0, 1, 2], practiced: [0, 1, 2] } } } };
+  const chapter = readStudy({ getItem: () => JSON.stringify(saved) }).chapters.square;
+  assert.equal(chapter.passedAt, undefined);
+  assert.equal(chapter.practice.finished, false);
+  assert.deepEqual(chapter.practice.independent, [0, 1, 2]);
+  assert.equal(chapter.practice.skill, 3);
+  assert.equal(practiceItem(id, chapter.practice).label, '解釋立方和的抵消');
+});

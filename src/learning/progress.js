@@ -20,7 +20,20 @@ export function readStudy(storage) {
   if (!storage) return empty;
   try {
     const stored = JSON.parse(storage.getItem(storageKey));
-    if (stored?.version === 1 && stored.chapters && stored.experiments && validLocation(stored.location)) return stored;
+    if (stored?.version === 1 && stored.chapters && stored.experiments && validLocation(stored.location)) {
+      const chapters = { ...stored.chapters };
+      for (const [id, chapter] of Object.entries(chapters)) {
+        const practice = chapter.practice;
+        const count = skills[id]?.length;
+        if (!count || !practice?.variants || practice.variants.length >= count) continue;
+        const { passedAt, reviewAt, ...current } = chapter;
+        const variants = Array.from({ length: count }, (_, i) => practice.variants[i] ?? 0);
+        chapters[id] = { ...current, practice: practice.finished ?
+          { ...practice, ...newQuestion(), variants, skill: practice.variants.length, finished: false } :
+          { ...practice, variants } };
+      }
+      return { ...stored, chapters };
+    }
     const legacy = JSON.parse(storage.getItem('sequence-progress') || '[]');
     if (Array.isArray(legacy)) {
       return { ...empty, chapters: Object.fromEntries(legacy.filter(id => Object.hasOwn(skills, id)).map(id => [id, { explored: true }])) };

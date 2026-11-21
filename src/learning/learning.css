@@ -37,6 +37,11 @@
 .derivation-table th { position: sticky; left: 0; z-index: 1; background: #edf4e6; text-align: left; box-shadow: 1px 0 #c2d2b8; }
 .lesson-card summary { cursor: pointer; font-weight: 680; color: #2a5235; }
 .lesson-card .worked-example { margin-top: 12px; font-size: 14px; }
+.guided-lesson > #lesson-experiment:empty { display: none; }
+.worked-fields { display: flex; flex-wrap: wrap; gap: 10px 14px; margin: 12px 0; }
+.worked-fields label { display: grid; gap: 4px; flex: 1 1 135px; min-width: 0; font-weight: 600; }
+.worked-fields :is(input, select) { width: 100%; min-width: 0; padding: 8px; min-height: 42px; color: inherit; background: #fff; font: inherit; font-size: 16px; border: 1px solid #acbea2; border-radius: 7px; }
+.custom-worked .worked-solution { overflow-wrap: anywhere; }
 .practice-panel { font-size: 14px; }
 .practice-chapter { margin: 0; font-size: clamp(20px, 3vw, 27px); }
 .practice-panel p.practice-progress, .practice-panel .answer-format { font-size: 13px; line-height: 1.65; }

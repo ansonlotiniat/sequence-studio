@@ -31,11 +31,23 @@ export function arithmeticPairTotal(a, d, n) {
 export function arithmeticPartialSum(a, d, n) {
   return decimalLinear(a, n, d, n * (n - 1) / 2);
 }
+export function arithmeticTerm(a, d, n) {
+  return decimalLinear(a, 1, d, n - 1);
+}
+export function powerSums(n) {
+  const linear = n * (n + 1) / 2;
+  return { linear, square: n * (n + 1) * (2 * n + 1) / 6, cube: linear ** 2 };
+}
+export function recurrence(a, b, n) {
+  const values = [a, b];
+  while (values.length < n + 2) values.push(values.at(-2) + values.at(-1));
+  return { values: values.slice(0, n), next: values[n + 1], sum: values[n + 1] - b };
+}
 export function calculate(id, input) {
   const p = normalize(input);
   const values = [];
   for (let k = 1; k <= p.n; k++) {
-    if (id === 'arithmetic') values.push(decimalLinear(p.a, 1, p.d, k - 1));
+    if (id === 'arithmetic') values.push(arithmeticTerm(p.a, p.d, k));
     else if (id === 'geometric') values.push(k === 1 ? p.a : p.a * p.r ** (k - 1));
     else if (id === 'triangular') values.push(k * (k + 1) / 2);
     else if (id === 'fibonacci') values.push(k < 3 ? 1 : values[k - 2] + values[k - 3]);

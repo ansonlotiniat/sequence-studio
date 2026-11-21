@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import { sequenceBasics, teaching } from './content.js';
+import { lessonDepth } from './depth.js';
+import WorkedLab from './WorkedLab.jsx';
+
+const { SquareSumLesson } = import.meta.glob('../visualizations/LearningModels.jsx', { eager: true })['../visualizations/LearningModels.jsx'] ?? {};
 
 export function SequenceBasics() {
   return <details className="sequence-basics lesson-card">
@@ -23,10 +27,22 @@ function Step({ step }) {
 
 export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset, onQuiz, children }) {
   const lesson = teaching[id];
+  const depth = lessonDepth[id];
   const [ready, setReady] = useState(null);
   const [prediction, setPrediction] = useState('');
   const [exitOpen, setExitOpen] = useState(false);
+  const [squareMission, setSquareMission] = useState(true);
+  const [squareCheck, setSquareCheck] = useState(null);
   const [question, options, expected, explanation] = lesson.readiness;
+  const directSquareMission = id === 'square' && SquareSumLesson && squareMission;
+  function showPreset(preset, apply) {
+    if (id === 'square') {
+      const mission = preset.view === 'sum' && Number(preset.params.n) === 3;
+      setSquareMission(mission);
+      if (!mission) setSquareCheck(null);
+    }
+    apply(preset);
+  }
   return <div className="guided-lesson">
     <section className="lesson-card">
       <span className="eyebrow">01 · 準備好再出發</span>
@@ -46,13 +62,18 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
       <p>{lesson.hook}</p>
       <label className="prediction-label" htmlFor="prediction">{lesson.prediction}</label>
       <textarea id="prediction" rows="2" value={prediction} onChange={e => setPrediction(e.target.value)} placeholder="寫下你的猜想和理由（不評分）" maxLength={500} />
-      {!observing && <button type="button" className="primary-button" onClick={() => onOpenExperiment(lesson.presets[0])}>打開實驗，核對猜想 <ArrowRight size={16}/></button>}
+      {!observing && <button type="button" className="primary-button" onClick={() => showPreset(lesson.presets[0], onOpenExperiment)}>打開實驗，核對猜想 <ArrowRight size={16}/></button>}
       {observing && <>
         <p className="lesson-feedback"><Lightbulb size={16} /> {lesson.observation}</p>
-        <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => onPreset(preset)}>{preset.label}</button>)}</div>
+        <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => showPreset(preset, onPreset)}>{preset.label}</button>)}</div>
       </>}
     </section>
-    {observing && children}
+    <div id="lesson-experiment">{observing && (directSquareMission ? <section className="lesson-card">
+      <SquareSumLesson n={3} onComplete={setSquareCheck} />
+      {squareCheck?.correct && <p className="lesson-feedback" role="status">已核對兩種計數。試改成 n=4，看看增加的是一圈還是一整層。</p>}
+    </section> : children)}</div>
+    <p className="lesson-card"><strong>探索任務：</strong>{depth.mission}</p>
+    <WorkedLab id={id} startingParams={lesson.presets[0].params} onShowExperiment={preset => showPreset(preset, onOpenExperiment)} />
     <section className="lesson-card" id="explanation">
       <span className="eyebrow">03 · 推導與例題</span>
       <h3>從看見，到理解</h3>
@@ -68,10 +89,22 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
           <ol>{lesson.example[1].map(step => <li key={step}>{step}</li>)}</ol>
         </div>
       </div>
+      <div className="worked-example">
+        <div>
+          <span className="eyebrow">先自己試 · 再核對做法</span>
+          <h4>{depth.example[0]}</h4>
+          <p>{depth.example[1]}</p>
+          <details><summary>打開分步解法</summary>
+            <ol>{depth.example[2].map(step => <li key={step}>{step}</li>)}</ol>
+          </details>
+        </div>
+      </div>
+      <p className="lesson-feedback"><strong>易錯提醒：</strong>{depth.mistake}</p>
     </section>
     <section className="lesson-card">
       <span className="eyebrow">04 · 離開前，用自己的話說</span>
       <h3>不看公式，能解釋嗎？</h3>
+      <p><strong>帶走的重點：</strong>{depth.summary}</p>
       <p>{lesson.exit[0]}</p>
       <div className="lesson-actions">
         <button type="button" className="outline-button" aria-expanded={exitOpen} onClick={() => setExitOpen(!exitOpen)}>{exitOpen ? '收起核對' : '我想好了，核對理由'}</button>

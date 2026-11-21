@@ -98,3 +98,20 @@ test('each skill supplies distinct transfer prompts and diagnoses wrong choices'
     }
   }
 });
+
+test('graded transfer tasks distinguish model quantities and handle exact decimal cancellation', () => {
+  const transfer = [
+    ['square', '36', '14', /一層正方形/],
+    ['geometric', '4', '0', /項趨近 0/],
+    ['triangular', '20', '10', /最大展品/],
+    ['fibonacci', '31', '33', /第二項不是 1/],
+    ['annuity', '155', '1155', /扣掉本金/],
+  ];
+  for (const [id, correct, confusion, feedback] of transfer) {
+    const item = makeItem(id, skills[id].length - 1, 0);
+    assert.equal(grade(item, correct).status, 'correct', id);
+    assert.match(grade(item, confusion).feedback, feedback, id);
+  }
+  const cancellation = makeItem('arithmetic', 0, 0, { a: -0.3, d: 0.1, n: 3 });
+  assert.equal(grade(cancellation, '0').status, 'correct');
+});

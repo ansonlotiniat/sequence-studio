@@ -1,0 +1,61 @@
+.chat-panel .chat-context {
+  display: grid;
+  gap: .35rem;
+  color: #4b6545;
+  font-size: .75rem;
+  line-height: 1.5;
+}
+.chat-context summary { cursor: pointer; }
+.chat-context details p { margin: .3rem 0 0; }
+.chat-panel .chat-message,
+.chat-panel .chat-form textarea { font-size: .875rem; }
+.chat-panel .chat-privacy { color: #4f6554; font-size: .6875rem; }
+.chat-message .message-label { font-size: .6875rem; }
+.chat-message.user .message-label { color: #fff; }
+.chat-message p { margin: .4rem 0; }
+.tutor-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .35rem;
+  padding: .45rem 1rem;
+  font-size: .75rem;
+  border-top: 1px solid #dfe8d8;
+}
+.tutor-mode select {
+  margin-inline-start: .25rem;
+  padding: .3rem;
+  border: 1px solid #becdb8;
+  border-radius: .4rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.tutor-suggestion {
+  flex-shrink: 0;
+  padding: .7rem;
+  border: 1px solid #b7c9a7;
+  border-radius: .6rem;
+  background: #f7faf3;
+  font-size: .8125rem;
+}
+.tutor-suggestion ul, .tutor-practice ol { padding-inline-start: 1.2rem; }
+.tutor-suggestion > div { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.tutor-suggestion .apply-action, .tutor-practice .outline-button { min-height: 2.35rem; }
+.tutor-coach-form {
+  display: grid;
+  gap: .45rem;
+  font-size: .75rem;
+  flex-shrink: 0;
+}
+.tutor-coach-form label { display: grid; gap: .35rem; }
+.tutor-coach-form textarea {
+  width: 100%;
+  padding: .5rem;
+  border: 1px solid #becdb8;
+  border-radius: .4rem;
+  color: inherit;
+  resize: vertical;
+}
+.tutor-coach-form button { justify-self: start; }

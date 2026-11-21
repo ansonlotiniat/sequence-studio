@@ -1,6 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildChatHistory } from '../src/chat.js';
+
+test('history never sends turns from a different experiment snapshot', () => {
+  const entries = [
+    { role: 'user', text: 'earlier question', signature: 'old' },
+    { role: 'assistant', text: 'earlier answer', signature: 'old' },
+    { role: 'user', text: 'current question', signature: 'current' },
+    { role: 'assistant', text: 'current answer', signature: 'current' },
+    { role: 'user', text: 'follow-up', signature: 'current' },
+  ];
+  assert.deepEqual(buildChatHistory(entries, 'current').map(m => m.text), ['current question', 'current answer', 'follow-up']);
+});
 import { parseInput } from '../api/tutor.js';
 
 test('a follow-up after a long model reply stays valid without changing displayed history', () => {

@@ -103,7 +103,7 @@ export function ArithmeticProof({ c, selected, setSelected }) {
     <h4>數值核對</h4>
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected} formatValue={f}/>
-    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : mathNotation(`a${k + 1} − a${k} = d；本次公差 d = ${f(p.d)}`)}</p>
+    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : mathNotation(`a${k + 1} − a${k} = d；本次公差 d ${displayRelation(exactDecimal((c.sourceParams ?? p).d), f(p.d))} ${f(p.d)}`)}</p>
     <button className="proof-action proof-primary" aria-expanded={paired} onClick={() => setPaired(!paired)}>{paired ? '收起配對結果，再預測一次' : '倒寫配對，檢查每對的和'}</button>
     <ComparisonTable label="正寫與倒寫配對表" columns={values.map((_, i) => i + 1)} rows={[
       { label: '正寫 Sₙ', cells: values.map((v, i) => <span className={i === k ? 'source-a' : ''}>{f(v)}</span>) },

@@ -105,7 +105,7 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 .lab-layout > .visual-panel { grid-column: 1; grid-row: 1; }
 .lab-layout > .controls-panel { grid-column: 2; grid-row: 1; }
 .control-heading { font-size: 14px; color: #31572f; gap: 10px; }
-.control-tag { font-size: 12px; color: #34622d; }
+.control-tag { font: 12px/1.5 var(--font); color: #34622d; }
 .controls-panel > p { font-size: 12px; color: #5b7150; margin-bottom: 20px; }
 .term-control { gap: 8px; }
 .term-control label { font-size: 13px; color: #4e6643; }
@@ -127,7 +127,7 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 .experiment-results .sum-stat { border: 1px solid #d8e3cf; border-radius: 8px; background: #f6f9f2; }
 .experiment-results :is(.stat-box, .sum-stat) > span { display: flex; justify-content: space-between; gap: 6px; }
 .experiment-results .sum-stat strong { display: block; margin-top: 4px; line-height: 1.2; }
-.controls-panel .experiment-notes { grid-column: 1/-1; margin-top: 10px; }
+.visual-panel > .experiment-notes { padding: 0 16px 10px; border-top: 1px solid #dce4d8; }
 .experiment-notes summary { cursor: pointer; min-height: 44px; padding-block: 10px; color: #365a30; font-size: 13px; }
 .experiment-notes > p { margin: 4px 0 10px; color: #4f6b42; font-size: 13px; }
 .experiment-notes .observe-note { margin: 0; }
@@ -256,7 +256,6 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
   .lab-layout { display: block; }
   .lab-layout > .visual-panel { margin-top: 12px; }
   .controls-panel { position: sticky; top: 72px; z-index: 20; padding: 10px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 10px; box-shadow: 0 4px 14px #243b2414; }
-  .controls-panel:has(.experiment-notes[open]) { position: static; }
   .app-shell .controls-panel > :is(.term-control, .extra-controls, .experiment-results, .experiment-notes) { grid-column: 1/-1; grid-row: auto; margin: 0; }
   .controls-panel :is(.control-heading, .range, .range-labels), .controls-panel > p { display: none; }
   .app-shell .controls-panel .term-control { display: flex; align-items: center; justify-content: space-between; }
@@ -270,12 +269,12 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
   .number-control input { width: 72px; padding: 6px; }
   .checkbox-label { grid-column: 1/-1; margin: 0; }
   .controls-panel .experiment-results { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-  .app-shell .controls-panel .experiment-results :is(.stat-box, .sum-stat) { padding: 8px; }
+  .app-shell .controls-panel .experiment-results :is(.stat-box, .sum-stat) { padding: 4px 8px; }
   .controls-panel .experiment-results :is(.stat-box, .sum-stat) > span { font-size: 12px; }
-  .app-shell .experiment-results :is(.stat-box, .sum-stat) strong { font-size: clamp(20px, 6vw, 24px); margin: 3px 0 0; }
+  .app-shell .experiment-results :is(.stat-box, .sum-stat) strong { font-size: 20px; line-height: 1.2; margin: 0; }
   .experiment-notes summary { padding-block: 10px; font-size: 12px; }
-  .lab-layout:not(:has(.experiment-notes[open])) #experiment-figure,
-  .lab-layout:not(:has(.experiment-notes[open])) #experiment-figure :is(button, input, [tabindex]) { scroll-margin-top: calc(84px + var(--experiment-controls-height, 220px)); }
+  #experiment-figure,
+  #experiment-figure :is(button, input, [tabindex], summary) { scroll-margin-top: calc(84px + var(--experiment-controls-height, 180px)); }
   .observe-note p { font-size: 12px; }
   .observe-note strong { font-size: 12px; }
   .learning-help { padding: 20px; gap: 12px; flex-wrap: wrap; margin-top: 24px; }

@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { arithmeticPartialSum, calculate } from '../math.js';
-import { chartDomain, geometricTail, signedLogScale, visualFormat as f } from './proofModels.js';
+import { calculate } from '../math.js';
+import { chartDomain, geometricTail, proofCalculation, proofFormat, signedLogScale, visualFormat as f } from './proofModels.js';
 import { ScaleToggle } from './SequencePictures.jsx';
 import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 import { SquareSumExplorer } from './LearningModels.jsx';
@@ -68,11 +68,13 @@ export function SequenceChart({ values, selected, setSelected, cumulative = fals
 export function SumView({ id, c, selected, setSelected, onParams }) {
   if (id === 'square') return <SquareSumExplorer key={c.params.n} c={c} setSelected={setSelected} onParams={onParams}/>;
   const k = (selected ?? c.params.n - 1) + 1;
+  const sequenceProof = id === 'arithmetic' || id === 'geometric';
+  const formatSum = sequenceProof ? proofFormat : f;
   let total = 0;
-  const sums = c.values.map((v, i) => id === 'arithmetic' ? arithmeticPartialSum(c.params.a, c.params.d, i + 1) : (total += v));
-  const reference = calculate(id, { ...c.params, n: 12 }).values;
+  const sums = sequenceProof ? c.partialSums ?? proofCalculation(id, c).partialSums : c.values.map(v => (total += v));
+  const reference = calculate(id, { ...c.params, n: 12 });
   let running = 0;
-  const domainValues = reference.map((v, i) => id === 'arithmetic' ? arithmeticPartialSum(c.params.a, c.params.d, i + 1) : (running += v));
+  const domainValues = sequenceProof ? proofCalculation(id, reference).partialSums : reference.values.map(v => (running += v));
   if (id === 'square' || id === 'triangular') return <div className="proof-scene" data-proof={`${id}-sum`}>
     <div className="proof-heading"><h3>加的是完整圖形，不是多加一排</h3><p>選第 k 個圖形，只累加到這裡；留意 aₖ 與 Sₖ 是兩個不同的量。</p></div>
     <div className="proof-sum-shapes">{c.values.map((value, i) => <button key={i} aria-pressed={k === i + 1} onClick={() => setSelected(i)} className={i < k ? 'proof-included' : ''}>
@@ -90,8 +92,8 @@ export function SumView({ id, c, selected, setSelected, onParams }) {
     <div className="proof-heading"><h3>{id === 'annuity' ? '同一個終點，逐筆加總' : '單項與部分和，分開觀察'}</h3><p>{id === 'annuity' ? `全部以 t=${c.params.n} 估值；橫軸是第 k 筆，不是第 k 年的帳戶結餘。` : '新增一項 aₖ，就是部分和 Sₖ 比 Sₖ₋₁ 改變的量。'}</p></div>
     <SequenceChart values={sums} selected={selected} setSelected={setSelected} cumulative annuityYear={id === 'annuity' ? c.params.n : null}
       domainValues={domainValues} limit={limit}/>
-    <div className="proof-equation">{id === 'annuity' ? `t=${c.params.n} 的 ${k} 筆存款終值小計` : `S${k}`} = {f(sums[k - 1])}</div>
-    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : `極限 S∞ = ${f(limit)}；尾和 S∞ − S${k} = a₁r^${k}/(1−r) = ${f(geometricTail(c.params.a, c.params.r, k))}。虛線是極限，不是第 13 項。`}</p>}
+    <div className="proof-equation">{id === 'annuity' ? `t=${c.params.n} 的 ${k} 筆存款終值小計` : `S${k}`} = {formatSum(sums[k - 1])}</div>
+    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : `極限 S∞ = ${formatSum(limit)}；尾和 S∞ − S${k} = a₁r^${k}/(1−r) = ${formatSum(geometricTail(c.params.a, c.params.r, k))}。虛線是極限，不是第 13 項。`}</p>}
     {id === 'fibonacci' && <div className="proof-fib-sum"><h4>把遞推式改寫成相鄰兩項的差</h4><div className="proof-scroll" tabIndex="0" role="region" aria-label="斐波那契求和抵消證明"><div className="proof-telescope">{c.values.slice(0, k).map((v, i) => <span key={i}>{i > 0 ? ' + ' : ''}(<b className={i < k - 1 ? 'proof-cancel' : ''}>F{i + 3}</b> − <b className={i > 0 ? 'proof-cancel' : ''}>F{i + 2}</b>)</span>)}</div></div><p>中間的正負項相消，只剩 F{k + 2} − F₂ = {extendedFib[k + 1]} − 1 = {f(sums[k - 1])}。</p></div>}
   </div>;
 }

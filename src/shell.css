@@ -20,7 +20,7 @@ main, h1 { scroll-margin-top: 92px; }
 .sidebar > * { flex-shrink: 0; }
 .brand { padding: 0 9px; }
 .brand > span { font-size: 30px; gap: 13px; }
-.brand-en { font-size: 12px; color: #52634f; }
+.brand-en { font-size: 12px; color: #52634f; max-width: none; letter-spacing: .5px; }
 .course-label { font-size: 12px; padding: 32px 12px 14px; color: #63745c; letter-spacing: 1px; }
 .overview-link, .lesson-nav { min-height: 48px; font-size: 14px; color: #4d634f; padding: 12px; gap: 12px; }
 .overview-link.active, .lesson-nav.active { color: #194735; background: #dce7d2; box-shadow: inset 3px 0 #416c42; }
@@ -102,7 +102,6 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 .practice-panel .hint-content { background: #edf3e6; color: #425d35; }
 .lab-layout { align-items: start; gap: 20px; grid-template-columns: minmax(0,1fr) 270px; }
 .controls-panel { padding: 20px; border-color: #d5e0ca; border-radius: 14px; background: #fff; }
-.control-tag { font-size: 12px; }
 .lab-layout > .visual-panel { grid-column: 1; grid-row: 1; }
 .lab-layout > .controls-panel { grid-column: 2; grid-row: 1; }
 .control-heading { font-size: 14px; color: #31572f; gap: 10px; }
@@ -145,6 +144,7 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
 .learning-help p { font-size: 13px; margin-top: 4px; color: #526c47; }
 .learning-help button { margin-left: auto; flex-shrink: 0; }
 .main-footer { padding: 24px 0 4px; margin-top: 16px; gap: 16px; font-size: 12px; color: #5c7052; line-height: 1.8; }
+.main-footer > span, .main-footer > span > span { font: inherit; }
 .main-footer > span:last-child { color: #5c7052; }
 .tutor-surface .floating-tutor { display: none !important; }
 .tutor-surface:focus { outline: none; }

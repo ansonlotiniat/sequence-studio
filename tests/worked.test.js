@@ -39,6 +39,14 @@ test('custom recurrence preserves the initial conditions and subtracts the secon
   assert.match(workedComputation('fibonacci', { n: 5, first: 2, second: 3 }).join(' '), /34−\(3\)＝31/);
 });
 
+test('geometric walkthrough keeps a near-unit ratio distinct from one in substitutions', () => {
+  for (const r of [1 - Number.EPSILON / 2, 1 + Number.EPSILON]) {
+    const steps = workedComputation('geometric', { a: 1, r, n: 3 });
+    assert.ok(steps.at(-2).includes(`÷[1−(${r})]`));
+    if (r < 1) assert.ok(steps.at(-1).includes(`÷[1−(${r})]`));
+  }
+});
+
 test('custom annuity uses the chosen timing and can invert the target or handle zero interest', () => {
   const input = { ...defaults, n: 2, rate: 10, payment: 1000, target: 2310 };
   const due = workedComputation('annuity', { ...input, due: true }).join(' ');

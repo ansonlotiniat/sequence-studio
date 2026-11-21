@@ -35,13 +35,14 @@ export function workedComputation(id, input) {
         arithmeticPosition(a, d, input.target),
       ];
     case 'geometric': {
+      const ratio = `(${r})`;
       const finite = r === 1 ? `r=1，直接把 ${n} 個 ${display(a)} 相加。` :
-        `有限和：${display(a)}×[1−${group(r)}^${n}]÷[1−${group(r)}] ≈ ${display(c.sum)}。`;
+        `有限和：${display(a)}×[1−${ratio}^${n}]÷[1−${ratio}] ≈ ${display(c.sum)}。`;
       const infinite = a === 0 ? '首項為零，所有項及部分和一直是零。' : Math.abs(r) < 1 ?
-        `|r|<1，無窮和為 ${display(a)}÷[1−${group(r)}] ≈ ${display(a / (1 - r))}；無窮和減目前部分和 ≈ ${display(a * r ** n / (1 - r))}。` :
+        `|r|<1，無窮和為 ${display(a)}÷[1−${ratio}] ≈ ${display(a / (1 - r))}；無窮和減目前部分和 ≈ ${display(a * r ** n / (1 - r))}。` :
         '|r|≥1，且首項不是零；項不趨近零，因此部分和不收斂。';
       return [n === 1 ? `第 1 項直接是 ${display(a)}，不用乘，也不用計算 0⁰。` :
-        `共乘 ${n - 1} 次：aₙ = ${display(a)}×${group(r)}^${n - 1} ≈ ${display(c.last)}。`,
+        `共乘 ${n - 1} 次：aₙ = ${display(a)}×${ratio}^${n - 1} ≈ ${display(c.last)}。`,
         `把各項相加：${add(c.values)} ≈ ${display(c.sum)}。`, finite, infinite];
     }
     case 'triangular': {

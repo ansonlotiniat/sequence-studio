@@ -1,7 +1,10 @@
 import { calculate, defaults, normalize } from './math.js';
 
+const significantDigits = 8;
+const roundSignificant = value => Number(value.toPrecision(significantDigits));
 const number = (prompt, answer, steps, hints, mistakes = [], precision = 'exact') =>
-  ({ prompt, answer, steps, hints, mistakes, precision });
+  ({ prompt, answer: precision === 'significant' ? roundSignificant(answer) : answer,
+    ...(precision === 'significant' && { exactAnswer: answer }), steps, hints, mistakes, precision });
 const choice = (prompt, options, answer, steps, hints) =>
   ({ prompt, options, answer, steps, hints });
 
@@ -18,7 +21,7 @@ const nText = '請輸入數字；可用小數、分數或科學記數法。';
 const instructions = {
   exact: nText,
   integer: '四捨五入至整數，只輸入數字，不加貨幣符號。',
-  significant: '如有需要，四捨五入至 8 位有效數字；可用小數、分數或科學記數法。',
+  significant: `如有需要，四捨五入至 ${significantDigits} 位有效數字；可用小數、分數或科學記數法。`,
 };
 
 export function readNumber(raw) {
@@ -33,15 +36,22 @@ export function readNumber(raw) {
   return value;
 }
 
+function matchesAnswer(value, expected, precision) {
+  if (value === expected) return true;
+  if (precision !== 'significant' || value === 0 || expected === 0) return false;
+  const magnitude = Math.abs(expected);
+  const place = Math.floor(Math.log10(magnitude)) - significantDigits + 1;
+  return Math.abs(value - expected) <= 0.5 * 10 ** place + Number.EPSILON * magnitude;
+}
+
 export function grade(item, raw) {
   const value = item.options ? (raw === '' || !/^\d+$/.test(raw) ? null : Number(raw)) : readNumber(raw);
   if (value === null || (item.options && value >= item.options.length)) return { status: 'invalid' };
-  if (value === item.answer) return { status: 'correct' };
-  const feedback = item.options ? item.options[value][1] : item.mistakes.find(([wrong]) => wrong === value)?.[1];
+  if (matchesAnswer(value, item.exactAnswer ?? item.answer, item.precision)) return { status: 'correct' };
+  const feedback = item.options ? item.options[value][1] : item.mistakes.find(([wrong]) => matchesAnswer(value, wrong, item.precision))?.[1];
   return { status: 'retry', feedback: feedback || item.hints[0] };
 }
 
-const term = (x, precision = 'exact') => precision === 'significant' ? Number(x.toPrecision(8)) : x;
 const parenthesize = x => x < 0 ? `(${x})` : x;
 const money = x => new Intl.NumberFormat('zh-Hant', { maximumFractionDigits: 6 }).format(x);
 
@@ -72,12 +82,12 @@ const questions = {
   arithmetic: [
     (p, v) => {
       const a = v ? 3 + v % 11 : p.a, d = v ? (v % 2 ? -2 : 2.5) : p.d, n = v ? 4 + v % 8 : Math.min(p.n + 1, 13);
-      const answer = term(a + (n - 1) * d, 'significant');
+      const answer = a + (n - 1) * d;
       return { ...number(`等差數列首項為 ${a}，公差為 ${d}。第 ${n} 項是多少？`, answer,
-        [`由第 1 項到第 ${n} 項有 ${n - 1} 步。`, `aₙ = a₁ + (n − 1)d = ${a} + ${n - 1} × ${parenthesize(d)} = ${answer}（按題目精度）。`],
+        [`由第 1 項到第 ${n} 項有 ${n - 1} 步。`, `aₙ = a₁ + (n − 1)d = ${a} + ${n - 1} × ${parenthesize(d)} = ${roundSignificant(answer)}（按題目精度）。`],
         ['從第 1 項起步，不是從第 0 項。', `用首項加上 ${n - 1} 次公差。`],
-        [[term(a + n * d, 'significant'), '看來可能多走了一步：由 1 到 n 只走 n−1 步。'],
-          [term((n - 1) * d, 'significant'), '你可能只算了變化量；記得從首項出發。']], 'significant'), scenario: { a, d, n } };
+        [[a + n * d, '看來可能多走了一步：由 1 到 n 只走 n−1 步。'],
+          [(n - 1) * d, '你可能只算了變化量；記得從首項出發。']], 'significant'), scenario: { a, d, n } };
     },
     (_, v) => {
       const a = 3 + v % 7, d = 4, n = 7 + v % 6, target = a + (n - 1) * d;
@@ -131,11 +141,11 @@ const questions = {
   geometric: [
     (p, v) => {
       const a = v ? 2 + v % 9 : p.a, r = v ? [0, 1, -2, 0.5][v % 4] : p.r, n = v ? 4 + v % 8 : p.n + 1;
-      const answer = term(a * r ** (n - 1), 'significant');
+      const answer = a * r ** (n - 1);
       return { ...number(`數列由首項 ${a} 開始，每一步乘 ${r}。第 ${n} 項是多少？`, answer,
-        [`由第 1 項到第 ${n} 項，共乘 ${n - 1} 次。`, `aₙ = ${a} × ${parenthesize(r)}^(${n - 1}) = ${answer}（按題目精度）。`],
+        [`由第 1 項到第 ${n} 項，共乘 ${n - 1} 次。`, `aₙ = ${a} × ${parenthesize(r)}^(${n - 1}) = ${roundSignificant(answer)}（按題目精度）。`],
         ['一步代表乘一次，不是加一次。', `由第 1 項到第 ${n} 項，指數是 ${n - 1}。`],
-        [[term(a * r ** n, 'significant'), '檢查是否多乘了一次。'], [0, '很小不等於零，試用科學記數法保留有效數字。']], 'significant'), scenario: { a, r, n } };
+        [[a * r ** n, '檢查是否多乘了一次。'], [0, '很小不等於零，試用科學記數法保留有效數字。']], 'significant'), scenario: { a, r, n } };
     },
     (_, v) => {
       const a = 2 + v % 7;

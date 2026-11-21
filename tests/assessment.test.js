@@ -48,6 +48,16 @@ test('explicit grading distinguishes nonzero, integer, and input format', () => 
   }
 });
 
+test('significant-digit grading accepts exact fractions and rounded answers', () => {
+  const item = makeItem('geometric', 0, 0, { n: 12, a: 1, r: 0.5 });
+  assert.equal(item.answer, 0.00024414063);
+  assert.equal(grade(item, '1/4096').status, 'correct');
+  assert.equal(grade(item, '0.00024414063').status, 'correct');
+  assert.equal(grade(item, '0.000244140624').status, 'correct');
+  assert.equal(grade(item, '0.00024414064').status, 'retry');
+  assert.equal(grade(item, '0').status, 'retry');
+});
+
 test('arithmetic diagnoses both an extra step and a noninteger position', () => {
   const item = makeItem('arithmetic', skills.arithmetic.indexOf('診斷步數與位置錯誤'), 0);
   assert.match(item.options[item.answer][0], /第 6 項是 -6.*5 步.*-7.*不在數列中/);

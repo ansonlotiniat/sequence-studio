@@ -1,5 +1,5 @@
 import { lessons, normalize } from '../src/math.js';
-import { calculatedFacts, experimentAction, experimentContext, modes, pageNames, parameterKeys, viewNames } from '../src/tutor/context.js';
+import { calculatedFacts, experimentAction, experimentContext, modes, pageNames, parameterKeys, squareComparisonReply, viewNames } from '../src/tutor/context.js';
 import { quizInstruction, quizSchema, replySchema, tutorInstruction } from '../src/tutor/prompt.js';
 import { quizHelp } from '../src/tutor/practice.js';
 
@@ -72,11 +72,12 @@ export default async function handler(req, res) {
   const model = /^[a-zA-Z0-9.-]+$/.test(process.env.GEMINI_MODEL || '') ? process.env.GEMINI_MODEL : 'gemini-3.5-flash-lite';
   const signal = AbortSignal.timeout(22000);
   const keys = input.mode === 'experiment' ? parameterKeys(input.lesson) : [];
+  const canCompareSquare = input.lesson === 'square' && Boolean(input.facts) && ['check', 'explain'].includes(input.mode);
   const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: input.quiz ? quizInstruction(input.quiz) : tutorInstruction(input) }] },
+    systemInstruction: { parts: [{ text: input.quiz ? quizInstruction(input.quiz) : tutorInstruction(input, canCompareSquare) }] },
     contents: input.messages,
     generationConfig: { temperature: 0.25, maxOutputTokens: 1600, responseMimeType: 'application/json',
-      responseSchema: input.quiz ? quizSchema(input.quiz) : replySchema(keys) },
+      responseSchema: input.quiz ? quizSchema(input.quiz) : replySchema(keys, canCompareSquare) },
   });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -96,14 +97,15 @@ export default async function handler(req, res) {
       }
       const parsed = modelReply(result);
       const hint = input.quiz?.choices.find(choice => choice.key === parsed?.choice);
-      if (input.quiz ? !hint : typeof parsed?.reply !== 'string' || !parsed.reply.trim()) {
+      if (input.quiz ? !hint : typeof parsed?.reply !== 'string' || !parsed.reply.trim() ||
+          (canCompareSquare && typeof parsed.squareComparison !== 'boolean')) {
         console.warn('tutor invalid structured reply');
         if (!attempt) continue;
         return reply(res, 502, { error: 'AI 回覆不完整。可以重試，或先用本站提示。' });
       }
       if (hint) return reply(res, 200, { hint: hint.text, hintLevel: hint.level });
       return reply(res, 200, {
-        reply: parsed.reply.trim().slice(0, 2000),
+        reply: canCompareSquare && parsed.squareComparison ? squareComparisonReply(input.facts) : parsed.reply.trim().slice(0, 2000),
         action: keys.length ? experimentAction(parsed.action, input.lesson, input.context.params) : null,
       });
     } catch {

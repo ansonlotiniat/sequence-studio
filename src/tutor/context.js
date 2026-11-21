@@ -68,11 +68,25 @@ export function calculatedFacts(lesson, context) {
       calculate(lesson, { ...context.params, n: context.selected }).sum;
     facts.selected = { term: context.selected, value: prefix.at(-1), sum: selectedSum };
   }
-  if (lesson === 'square') facts.newTiles = 2 * (context.selected ?? n) - 1;
+  if (lesson === 'square') {
+    facts.layerIncrements = values.map((value, i) => value - (values[i - 1] ?? 0));
+    facts.newTiles = facts.layerIncrements[(context.selected ?? n) - 1];
+  }
   if (lesson === 'geometric') facts.sumRule = r === 1 ? 'Sₙ = n × a₁；1−r=0，不可除以零。' : 'Sₙ = a₁(1−rⁿ)/(1−r)。';
   if (lesson === 'annuity') Object.assign(facts, { principal, interest: sum - principal,
     periods: values.map((_, i) => n - i - 1 + Number(due)), zeroInterest: rate === 0 });
   return facts;
+}
+
+export function squareComparisonReply({ values, last, sum, layerIncrements }) {
+  const n = values.length;
+  const subscript = String(n).replace(/\d/g, digit => '₀₁₂₃₄₅₆₇₈₉'[Number(digit)]);
+  return [
+    `兩臂各 n 格，角落只算一次，所以第 ${n} 圈新增 2n−1 = ${layerIncrements.at(-1)} 格。「新增多少」和「一共有多少」是不同問題。`,
+    `把各圈拼起來：${layerIncrements.join(' + ')} = ${last}，得到一個正方形，這是第 ${n} 項 a${subscript}。`,
+    `把完整的正方形相加：${values.join(' + ')} = ${sum}，才是平方數列的部分和 S${subscript}。`,
+    `把 n 改成 ${n === 12 ? 11 : n + 1}，你會把哪一組數相加來求部分和？`,
+  ].join('\n\n');
 }
 
 export function factLabel(lesson, context, facts) {

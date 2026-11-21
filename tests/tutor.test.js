@@ -30,6 +30,7 @@ test('server recomputes trusted math and rejects malformed chat', () => {
   const { context, facts } = parseInput({ ...input, context: { ...input.context, sum: 9999 } });
   assert.equal(facts.sum, 55);
   assert.equal(facts.newTiles, 5);
+  assert.deepEqual(facts.layerIncrements, [1, 3, 5, 7, 9]);
   assert.deepEqual(facts.selected, { term: 3, value: 9, sum: 14 });
   assert.equal(factLabel('square', context, facts), '前 3 項和：14');
   for (const invalid of [
@@ -98,6 +99,30 @@ test('provider receives the key only in the header; malformed JSON retries; mode
   assert.equal(res.statusCode, 200);
   assert.deepEqual(res.body.action, { params: { n: 7 } });
   assert.equal((await post(input)).body.action, null);
+});
+test('square misconception feedback uses calculator facts, not the model’s incorrect arithmetic', async t => {
+  const question = '我想兩臂各有 n 格，角落扣一次，所以是 2n−1。我把第 4 層的 7 格當成 S₄，哪裡弄錯了？';
+  const body = { ...input, mode: 'check', context: { page: 'lab', view: 'shape', params: { n: 4 } },
+    messages: [{ role: 'user', text: question }] };
+  const mock = await withProvider(t, async (_, options) => {
+    const request = JSON.parse(options.body);
+    assert.deepEqual(request.generationConfig.responseSchema.required, ['reply', 'squareComparison']);
+    assert.match(request.systemInstruction.parts[0].text, /"layerIncrements":\[1,3,5,7\]/);
+    assert.match(request.systemInstruction.parts[0].text, /1\+4\+9\+16=30 才是 S₄/);
+    return model('{"reply":"S₄ = 16","squareComparison":true}');
+  });
+  const check = await post(body);
+  assert.equal(check.statusCode, 200);
+  assert.match(check.body.reply, /第 4 圈新增 2n−1 = 7 格/);
+  assert.match(check.body.reply, /1 \+ 3 \+ 5 \+ 7 = 16.*a₄/);
+  assert.match(check.body.reply, /1 \+ 4 \+ 9 \+ 16 = 30.*S₄/);
+  assert.match(check.body.reply, /把 n 改成 5/);
+  assert.doesNotMatch(check.body.reply, /S₄ = 16/);
+  mock.mock.mockImplementation(async (_, options) => {
+    assert.deepEqual(JSON.parse(options.body).generationConfig.responseSchema.required, ['reply']);
+    return model('{"reply":"先觀察兩臂。","squareComparison":true}');
+  });
+  assert.equal((await post({ ...body, mode: 'hint' })).body.reply, '先觀察兩臂。');
 });
 test('upstream errors and safety blocks are handled without leakage or unnecessary retries', async t => {
   const mock = await withProvider(t, async () => ({ ok: false, status: 403, json: () => assert.fail('upstream error body read') }));

@@ -39,7 +39,7 @@ export function parameterValue(key, value) {
 export function snapshotLabel(context) {
   if (!context.params) return pageNames[context.page];
   return [viewNames[context.view], ...Object.entries(context.params).map(([key, value]) =>
-    `${parameterNames[key]} ${parameterValue(key, value)}`), ...(context.proof ? ['已拼成長方形'] : []),
+    `${parameterNames[key]} ${parameterValue(key, value)}`), ...(context.proof ? ['已拼合點陣'] : []),
     ...(context.selected ? [`選中第 ${context.selected} 項`] : [])].join(' · ');
 }
 

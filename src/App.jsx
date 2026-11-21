@@ -7,7 +7,7 @@ import Practice from './learning/Practice.jsx';
 import { fromHash, practiceItem, readStudy, recordPractice, startPractice, storageKey } from './learning/progress.js';
 import Lab from './visualizations/Lab.jsx';
 import Tutor from './tutor/Tutor.jsx';
-import { contextKey, experimentAction, experimentContext } from './tutor/context.js';
+import { contextKey, experimentAction, experimentContext, pickParams } from './tutor/context.js';
 
 function atLocation(study, location) {
   const { id, page } = location;
@@ -127,7 +127,7 @@ export default function App() {
     signature: JSON.stringify([item?.id, practice.draft, practice.feedback?.status]),
     feedback: practice.feedback?.status === 'retry' ? practice.feedback.feedback : null,
     input: practice.feedback?.status === 'retry' ? { skill: practice.skill, variant: practice.variants[practice.skill],
-      params: practice.params, attempt: practice.draft, hintLevel: practice.hintLevel } : null,
+      params: pickParams(id, practice.params), attempt: practice.draft, hintLevel: practice.hintLevel } : null,
     canHint: Boolean(item && !resolved && practice.hintLevel < item.hints.length),
     onHint: (level = practice.hintLevel + 1) => setStudy(current => {
       if (current.location.id !== id || current.location.page !== 'quiz') return current;

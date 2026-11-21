@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import Layout, { LearningPath } from './Layout.jsx';
 import { calculate, defaults, lessons, normalize } from './math.js';
 import GuidedLesson from './learning/GuidedLesson.jsx';
@@ -27,12 +27,16 @@ export default function App() {
   const [study, setStudy] = useState(initialStudy);
   const [chatOpen, setChatOpen] = useState(false);
   const closeTutor = useCallback(() => setChatOpen(false), []);
+  const openTutor = useCallback(() => setChatOpen(true), []);
+  const [figureTutorScope, setFigureTutorScope] = useState(null);
+  const returnToFigure = useRef(false);
   const [view, setView] = useState('shape');
   const [proof, setProof] = useState(false);
   const [experimentRun, setExperimentRun] = useState(0);
   const [lessonExperimentOpen, setLessonExperimentOpen] = useState(false);
   const [selection, setSelection] = useState(null);
   const { id, page } = study.location;
+  const figureScope = `${id}:${page}`;
   const chapter = study.chapters[id] ?? {};
   const index = lessons.findIndex(l => l.id === id);
   const lesson = lessons[index];
@@ -48,6 +52,14 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(study)); } catch {}
   }, [study]);
+
+  useEffect(() => {
+    if (chatOpen || !returnToFigure.current) return;
+    returnToFigure.current = false;
+    const figure = document.getElementById('experiment-figure');
+    figure?.focus({ preventScroll: true });
+    figure?.scrollIntoView({ block: 'start' });
+  }, [chatOpen]);
 
   useEffect(() => {
     if (!fromHash(window.location.hash)) {
@@ -109,6 +121,12 @@ export default function App() {
     if (!window.matchMedia('(min-width: 1280px)').matches) closeTutor();
   }
 
+  function lookAtFigure() {
+    returnToFigure.current = true;
+    setFigureTutorScope(figureScope);
+    closeTutor();
+  }
+
   function changePractice(practice) {
     setStudy(current => ({
       ...current,
@@ -144,17 +162,20 @@ export default function App() {
     }),
   };
 
-  const lab = <Lab key={`${id}:${experimentRun}`} lesson={lesson} c={c} setParams={setParams} view={view} setView={setView} proof={proof} setProof={setProof} onSelectionChange={onSelectionChange} />;
+  const tutorResume = figureTutorScope === figureScope && <button type="button" className="outline-button tutor-resume"
+    aria-controls="learning-tutor" aria-expanded={chatOpen} onClick={openTutor}><Sparkles size={16} aria-hidden="true"/>繼續對話</button>;
+  const lab = <Lab key={`${id}:${experimentRun}`} lesson={lesson} c={c} setParams={setParams} view={view} setView={setView}
+    proof={proof} setProof={setProof} onSelectionChange={onSelectionChange} tutorResume={tutorResume} />;
 
-  return <Layout {...{ study, lesson, navigate, chatOpen, closeTutor }} openTutor={() => setChatOpen(true)}
+  return <Layout {...{ study, lesson, navigate, chatOpen, closeTutor, openTutor }}
     tutor={<Tutor chatOpen={chatOpen} setChatOpen={setChatOpen} lesson={lesson}
-      context={tutorContext} practiceCoach={practiceCoach} onApplyAction={applyAction} />}>
+      context={tutorContext} practiceCoach={practiceCoach} onApplyAction={applyAction} onLookAtFigure={lookAtFigure} />}>
     {page === 'path' ? <LearningPath study={study} navigate={navigate} /> : page === 'quiz' ?
       <Practice id={id} practice={chapter.practice} onChange={changePractice} reviewAt={chapter.reviewAt}
         onLab={() => navigate('lab')} onLearn={() => navigate('learn')} hasNext={Boolean(nextLesson)}
         onNextChapter={() => nextLesson ? navigate('learn', nextLesson.id) : navigate('path')}
         onRestart={() => changePractice(startPractice(id, c.params, chapter.practice))} /> : page === 'learn' ?
-      <GuidedLesson key={id} id={id} observing={lessonExperimentOpen}
+      <GuidedLesson key={id} id={id} observing={lessonExperimentOpen} tutorResume={tutorResume}
         onOpenExperiment={next => { setLessonExperimentOpen(true); preset(next); }}
         onPreset={preset} onQuiz={() => navigate('quiz')}>{lab}</GuidedLesson> : <>
         {lab}

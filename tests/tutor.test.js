@@ -8,7 +8,7 @@ test('direct Node rate limits ignore spoofed forwarding addresses', async () => 
   delete process.env.VERCEL;
   process.env.GEMINI_API_KEY='test-only-placeholder';
   let calls=0;
-  global.fetch=async()=>{calls++;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({reply:'觀察下一圈。'})}]}}]})};};
+  global.fetch=async()=>{calls++;return model('{"reply":"觀察下一圈。","squareHintTerm":"none"}');};
   try {
     for(let i=0;i<11;i++) {
       const req={method:'POST',headers:{'content-type':'application/json','x-forwarded-for':`198.51.100.${i}`},socket:{remoteAddress:'203.0.113.70'},body:input};
@@ -92,7 +92,7 @@ test('provider receives the key only in the header; malformed JSON retries; mode
     assert.ok(!url.includes('test-only-placeholder'));
     assert.equal(opts.headers['x-goog-api-key'], 'test-only-placeholder');
     assert.equal(JSON.parse(opts.body).generationConfig.responseMimeType, 'application/json');
-    return ++calls === 1 ? model('{') : model('{"reply":"看看新加的一圈。","action":{"params":{"n":7}}}');
+    return ++calls === 1 ? model('{') : model('{"reply":"看看新加的一圈。","squareHintTerm":"none","action":{"params":{"n":7}}}');
   });
   const res = await post({ ...input, mode: 'experiment' });
   assert.equal(calls, 2);
@@ -119,10 +119,35 @@ test('square misconception feedback uses calculator facts, not the model’s inc
   assert.match(check.body.reply, /把 n 改成 5/);
   assert.doesNotMatch(check.body.reply, /S₄ = 16/);
   mock.mock.mockImplementation(async (_, options) => {
-    assert.deepEqual(JSON.parse(options.body).generationConfig.responseSchema.required, ['reply']);
-    return model('{"reply":"先觀察兩臂。","squareComparison":true}');
+    assert.deepEqual(JSON.parse(options.body).generationConfig.responseSchema.required, ['reply', 'squareHintTerm']);
+    return model('{"reply":"先觀察兩臂。","squareHintTerm":"none"}');
   });
   assert.equal((await post({ ...body, mode: 'hint' })).body.reply, '先觀察兩臂。');
+});
+test('square-sum hints guide a concrete grouping without revealing the requested total', async t => {
+  const body = { ...input, mode: 'hint', context: { page: 'lab', view: 'shape', params: { n: 5 } },
+    messages: [{ role: 'user', text: '為什麼 1+4+9 等於 14？' }] };
+  const mock = await withProvider(t, async (_, options) => {
+    const { generationConfig, systemInstruction } = JSON.parse(options.body);
+    assert.deepEqual(generationConfig.responseSchema.properties.squareHintTerm.enum, ['none', '2', '3', '4', '5']);
+    assert.match(systemInstruction.parts[0].text, /不要把原問題反問回去/);
+    return model('{"reply":"等於 14。","squareHintTerm":"3"}');
+  });
+  const hint = await post(body);
+  assert.equal(hint.statusCode, 200);
+  assert.match(hint.body.reply, /切到「累積求和」後，只數前 3 個完整正方形/);
+  assert.match(hint.body.reply, /1×1 和 2×2 .*共 5 格/);
+  assert.match(hint.body.reply, /3 排，每排 3 格/);
+  assert.doesNotMatch(hint.body.reply, /14|55/);
+
+  mock.mock.mockImplementation(async () => model('{"reply":"把第一個先放好。","squareHintTerm":"2"}'));
+  const two = await post({ ...body, context: { page: 'learn', view: 'sum', params: { n: 2 } } });
+  assert.equal(two.statusCode, 200);
+  assert.match(two.body.reply, /^在平方和拼圖中.*先放入 1×1.*保留這 1 格.*2 排，每排 2 格/);
+  assert.doesNotMatch(two.body.reply, /5 格/);
+
+  mock.mock.mockImplementation(async () => model('{"reply":"…","squareHintTerm":"8"}'));
+  assert.equal((await post(body)).statusCode, 502);
 });
 test('upstream errors and safety blocks are handled without leakage or unnecessary retries', async t => {
   const mock = await withProvider(t, async () => ({ ok: false, status: 403, json: () => assert.fail('upstream error body read') }));

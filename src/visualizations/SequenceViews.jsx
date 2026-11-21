@@ -1,27 +1,80 @@
-import React, { useEffect, useState } from 'react';
-import { format as f } from '../math.js';
+import React, { useId, useState } from 'react';
+import { calculate } from '../math.js';
+import { chartDomain, visualFormat as f } from './proofModels.js';
+import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 
-export function ShapeView({id,c,proof,selected,setSelected}) {
-  const n=c.params.n;
-  if(id==='square') return <div className="squares-scene"><div className="scene-label">一個數字，一個正方形 <span>邊長 × 邊長</span></div><div className={`squares-row ${n>6?'dense':''}`}>{c.values.map((v,i)=><button key={i} className={`square-item ${selected===i?'selected':''}`} onClick={()=>setSelected(i)} aria-label={`第 ${i+1} 項，${v} 個方塊`}><span className="term-index">a<sub>{i+1}</sub></span><div className="square-grid" style={{gridTemplateColumns:`repeat(${i+1},1fr)`,width:`calc(${i+1} * var(--tile-pitch))`}}>{Array.from({length:v},(_,j)=><span style={{animationDelay:`${j*4}ms`}} className={Math.floor(j/(i+1))===i||j%(i+1)===i?'new-tile':'old-tile'} key={j}/>)}</div><strong>{v}</strong><span className="square-dimension">{i+1} × {i+1}</span></button>)}</div><div className="scene-equation">{selected!==null?(selected===0?'1² = 1，數列從這一塊開始':`${selected+1}² = ${c.values[selected]}，比上一項多 ${2*(selected+1)-1} 塊`):<><span>1²</span><b>→</b><span>2²</span><b>→</b><span>3²</span><b>→</b><span>⋯</span><b>→</b><span>n²</span></>}</div></div>;
-  if(id==='triangular') return <div className="triangle-scene"><div className="scene-label">每一排，比上一排多一點 <span>{proof?'兩個三角形，拼成 n × (n + 1)':'點一下「拼成長方形」試試看'}</span></div><div className={`triangle-pair ${proof?'paired':''}`}><div className="dot-triangle">{Array.from({length:n},(_,row)=><div key={row}>{Array.from({length:proof?n+1:row+1},(_,col)=><span key={col} className={col>row?'complement-dot':row===n-1?'orange-dot':''}/>)}</div>)}</div></div><div className="scene-equation">{proof?`${n} × ${n+1} ÷ 2 = ${c.last}`:`1 + 2 + ⋯ + ${n} = ${c.last}`}</div></div>;
-  if(id==='fibonacci') return <div className="fib-scene"><div className="scene-label">前兩項的和，成為新的一項 <span>F₁ = F₂ = 1</span></div><div className="fib-terms">{c.values.map((v,i)=><button key={i} onClick={()=>setSelected(i)} className={`${i===selected?'selected':''} ${i===n-1?'fib-last':''}`}><span>F<sub>{i+1}</sub></span><strong>{v}</strong><div className="fib-bar" style={{height:`${Math.max(8,v/c.last*100)}px`}}/></button>)}</div><div className="scene-equation">{(selected??n-1)<2?'起始條件：F₁ = F₂ = 1':`${c.values[(selected??n-1)-2]} + ${c.values[(selected??n-1)-1]} = ${c.values[selected??n-1]}`}</div></div>;
-  if(id==='annuity') return <div className="annuity-scene"><div className="scene-label">把每一筆存款，帶到時間線的終點 <span>{c.params.due?'每年期初存入':'每年期末存入'} · 每年複利一次</span></div><div className="annuity-bars">{c.values.map((v,i)=><button key={i} onClick={()=>setSelected(i)} className={selected===i?'selected':''}><span className="contribution-total">${f(v)}</span><div className="contribution-bar" style={{height:`${v/(Math.max(...c.values)||1)*140+12}px`}}><span className="interest-part" style={{flex:Math.max(0,v-c.params.payment)}}/><span className="principal-part" style={{flex:c.params.payment||1}}/></div><span>第 {i+1} 年</span><small>生息 {n-i-1+(c.params.due?1:0)} 年</small></button>)}</div><div className="scene-equation">${f(c.principal)} 本金 <b>＋</b> ${f(c.sum-c.principal)} 利息 <b>＝</b> ${f(c.sum)}</div></div>;
-  return <div className="pattern-scene"><div className="scene-label">{id==='arithmetic'?'同樣的差距，不一樣的高度':'每一步，都乘上同一個公比'}<span>{id==='arithmetic'?`公差 d = ${c.params.d}`:`公比 r = ${c.params.r}`}</span></div><SequenceChart values={c.values} selected={selected} setSelected={setSelected} bars/><div className="scene-equation">{c.values.slice(0,5).map(f).join('，')}{n>5?'，…':''}<span className="equation-tag">{id==='arithmetic'?`每次 ${c.params.d>=0?'+':''}${c.params.d}`:`每次 × ${c.params.r}`}</span></div></div>;
+export function ShapeView({ id, c, proof, setProof, selected, setSelected }) {
+  const props = { c, selected, setSelected };
+  if (id === 'square') return <SquareProof {...props}/>;
+  if (id === 'triangular') return <TriangleProof c={c} proof={proof} setProof={setProof}/>;
+  if (id === 'arithmetic') return <ArithmeticProof {...props}/>;
+  if (id === 'geometric') return <GeometricProof c={c}/>;
+  if (id === 'fibonacci') return <FibonacciProof {...props}/>;
+  return <AnnuityProof {...props}/>;
 }
 
-export function SequenceChart({values,selected,setSelected,bars=false,cumulative=false,annuityYear=null}) {
-  if (!Number.isInteger(selected) || selected < 0 || selected >= values.length) selected = null;
-  const max=Math.max(...values,0), min=Math.min(...values,0), span=max-min||1;
-  const left=55,right=635,top=35,bottom=230;
-  const y=v=>bottom-(v-min)/span*(bottom-top), x=i=>values.length===1?(left+right)/2:left+i*(right-left)/(values.length-1);
-  return <div className="chart-wrap"><svg viewBox="0 0 690 285" role="img" aria-label={annuityYear!==null?`第 ${annuityYear} 年年末的${cumulative?'存款終值小計':'各筆存款終值'}；橫軸為存款順序`:cumulative?'累積和圖表，橫軸是項數，縱軸是累積和 Sₖ':'數列圖表，橫軸是項數，縱軸是數值'}><text x="13" y="18" className="axis-title">{annuityYear!==null?'FV':cumulative?'Sₖ':'aₙ'}</text>{Array.from({length:5},(_,i)=>{const v=min+i*span/4;return <g key={i}><line x1={left} x2={right+10} y1={y(v)} y2={y(v)} className="gridline"/><text x={left-12} y={y(v)+4} textAnchor="end" className="axis-tick">{f(v)}</text></g>;})}<line x1={left} x2={right+10} y1={y(0)} y2={y(0)} className="zero-line"/>{!bars&&values.length>1&&<polyline points={values.map((v,i)=>`${x(i)},${y(v)}`).join(' ')} className="chart-line"/>}{values.map((v,i)=><g key={i} className="chart-point" role="button" tabIndex="0" aria-label={`第 ${i+1} ${annuityYear!==null?'筆':'項'} ${f(v)}`} onClick={()=>setSelected(i)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(i);}}}>{bars?<rect x={x(i)-Math.min(18,180/values.length)} y={Math.min(y(v),y(0))} width={Math.min(36,360/values.length)} height={Math.max(2,Math.abs(y(v)-y(0)))} rx="4" className={i===selected?'bar-selected':'chart-bar'}/>:<><circle cx={x(i)} cy={y(v)} r="15" fill="transparent"/><circle cx={x(i)} cy={y(v)} r={i===selected?7:4.5} className={i===selected?'point-selected':'point'}/></>}<text x={x(i)} y={bottom+23} textAnchor="middle" className="axis-tick">{i+1}</text>{(i===selected||(bars&&values.length<8))&&<text x={x(i)} y={y(v)-12} textAnchor="middle" className="chart-value">{f(v)}</text>}</g>)}<text x="659" y={bottom+23} className="axis-title">{annuityYear!==null?'k':'n'}</text></svg><div className="chart-detail">{selected===null?'點選任一項，查看它的數值':`第 ${selected+1} ${annuityYear!==null?'筆':'項'}${cumulative?'累計':''}：${f(values[selected])}`}</div></div>;
+export function SequenceChart({ values, selected, setSelected, cumulative = false, annuityYear = null, domainValues = values, limit = null }) {
+  const [fixed, setFixed] = useState(false);
+  const [connect, setConnect] = useState(false);
+  const titleId = useId();
+  const valid = Number.isInteger(selected) && selected >= 0 && selected < values.length ? selected : null;
+  const [min, max] = chartDomain([...(fixed ? domainValues : values), ...(limit === null ? [] : [limit])]);
+  const left = 92, right = 650, top = 35, bottom = 250;
+  const y = v => bottom - (v - min) / (max - min) * (bottom - top);
+  const x = i => values.length === 1 ? (left + right) / 2 : left + i * (right - left) / (values.length - 1);
+  const unit = annuityYear === null ? '項' : '筆';
+  const title = annuityYear !== null ? `第 ${annuityYear} 年年末的${cumulative ? '存款終值小計' : '各筆存款終值'}` : cumulative ? '部分和 Sₖ' : '單項 aₖ';
+  return <div className="proof-chart">
+    <div className="proof-chart-options"><label><input type="checkbox" checked={fixed} onChange={e => setFixed(e.target.checked)}/>固定為 12 {unit}的縱軸比例</label><label><input type="checkbox" checked={connect} onChange={e => setConnect(e.target.checked)}/>連線輔助觀察</label></div>
+    <p className="proof-scale-note">{fixed ? annuityYear !== null ? '縱軸參照同參數的 12 年模型；資料仍在本次終點估值。' : '縱軸按相同參數的 12 項固定，方便逐項比較。' : '縱軸依目前數值自動調整；高度只在本圖內比較。'}數列只定義整數位置，連線不代表中間另有項。</p>
+    <div className="proof-scroll" tabIndex="0" role="region" aria-label="可左右捲動的數列圖表">
+      <svg className="proof-chart-svg" viewBox="0 0 700 300" role="group" aria-labelledby={titleId}>
+        <title id={titleId}>{title}；橫軸為{annuityYear === null ? '項數 k' : '存款順序 k'}</title>
+        <text x="12" y="18" className="proof-svg-label">{annuityYear !== null ? 'FV ($)' : cumulative ? 'Sₖ' : 'aₖ'}</text>
+        {Array.from({ length: 5 }, (_, i) => { const v = min + i * (max - min) / 4; return <g key={i}><line x1={left} x2={right} y1={y(v)} y2={y(v)} className="proof-gridline"/><text x={left - 10} y={y(v) + 4} textAnchor="end" className="proof-svg-label">{f(v)}</text></g>; })}
+        <line x1={left} x2={right} y1={y(0)} y2={y(0)} className="proof-zero-line"/>
+        {limit !== null && <g><line x1={left} x2={right} y1={y(limit)} y2={y(limit)} className="proof-limit-line"/><text x={right} y={y(limit) - 10} textAnchor="end" className="proof-svg-label">極限 S∞ = {f(limit)}</text></g>}
+        {connect && values.length > 1 && <polyline points={values.map((v, i) => `${x(i)},${y(v)}`).join(' ')} className="proof-chart-line"/>}
+        {values.map((v, i) => <g key={i} className="proof-chart-point" role="button" tabIndex="0" aria-pressed={valid === i} aria-label={`第 ${i + 1} ${unit}${cumulative ? '累計' : ''}：${f(v)}`} onClick={() => setSelected(i)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(i); } }}>
+          <rect x={x(i) - 22} y={y(v) - 22} width="44" height="44" fill="transparent"/>
+          <circle cx={x(i)} cy={y(v)} r={valid === i ? 7 : 5} className={valid === i ? 'proof-chart-selected' : 'proof-chart-dot'}/>
+          <text x={x(i)} y={bottom + 25} textAnchor="middle" className="proof-svg-label">{i + 1}</text>
+          {i === valid && <text x={x(i)} y={y(v) - 14} textAnchor="middle" className="proof-chart-value">{f(v)}</text>}
+        </g>)}
+        <text x="678" y={bottom + 25} className="proof-svg-label">k</text>
+      </svg>
+    </div>
+    <p className="proof-chart-detail" role="status">{valid === null ? '點選圖點，或在下方數值表選擇一項。' : `第 ${valid + 1} ${unit}${cumulative ? '累計' : ''}：${f(values[valid])}`}</p>
+    <details className="proof-data"><summary>數值表：精確選點與鍵盤操作</summary><div className="proof-term-picker">{values.map((value, i) => <button key={i} aria-pressed={valid === i} onClick={() => setSelected(i)}><span>{cumulative ? 'S' : 'a'}<sub>{i + 1}</sub></span><strong>{f(value)}</strong></button>)}</div><p>顯示至多 7 位有效數字；極小非零數用科學記號，不當作 0。</p></details>
+  </div>;
 }
 
-export function SumView({id,c}) {
-  const [chosen,setChosen]=useState(null);
-  useEffect(()=>setChosen(null),[id,c.params.n]);
-  if(id==='square'||id==='triangular') return <div className="sum-scene"><div className="scene-label">{id==='square'?'把每一個正方形，全部加起來':'把每一個三角形數，全部加起來'}<span>注意：前 n 項的和 Sₙ ≠ 第 n 項 aₙ</span></div><div className="sum-shapes">{c.values.map((v,i)=><React.Fragment key={i}>{i>0&&<span className="plus-sign">+</span>}<div><div className={`sum-grid ${id==='triangular'?'triangle-grid':''}`} style={{gridTemplateColumns:`repeat(${i+1}, 1fr)`}}>{Array.from({length:id==='square'?v:(i+1)**2},(_,j)=><span key={j} style={id==='triangular'&&j%(i+1)>Math.floor(j/(i+1))?{visibility:'hidden'}:{}}/>)}</div><span>{v}</span></div></React.Fragment>)}</div><div className="sum-result"><span>S<sub>{c.params.n}</sub> = {c.values.length<=6?c.values.map(f).join(' + '):`${c.values.slice(0,3).map(f).join(' + ')} + ⋯ + ${f(c.last)}`}</span><strong>= {f(c.sum)}</strong></div></div>;
-  let total=0;const sums=c.values.map(v=>(total+=v));
-  return <div className="sum-chart"><div className="scene-label">{id==='annuity'?'在同一時點加總前 k 筆存款':'逐項相加，看總和如何變化'} <span>{id==='annuity'?`全部以第 ${c.params.n} 年年末估值，不是第 k 年末的帳戶結餘`:'縱軸為累積和 Sₖ，不是單項 aₖ'}</span></div><SequenceChart values={sums} selected={chosen} setSelected={setChosen} cumulative annuityYear={id==='annuity'?c.params.n:null}/><div className="sum-result"><span>{id==='annuity'?'所有存款在最後一年的終值之和':'前 n 項相加'}</span><strong>{id==='annuity'?'$':''}{f(c.sum)}</strong></div></div>;
+export function SumView({ id, c, selected, setSelected }) {
+  const k = (selected ?? c.params.n - 1) + 1;
+  let total = 0;
+  const sums = c.values.map(v => (total += v));
+  const reference = calculate(id, { ...c.params, n: 12 }).values;
+  let running = 0;
+  const domainValues = reference.map(v => (running += v));
+  if (id === 'square' || id === 'triangular') return <div className="proof-scene" data-proof={`${id}-sum`}>
+    <div className="proof-heading"><h3>加的是完整圖形，不是多加一排</h3><p>選第 k 個圖形，只累加到這裡；留意 aₖ 與 Sₖ 是兩個不同的量。</p></div>
+    <div className="proof-sum-shapes">{c.values.map((value, i) => <button key={i} aria-pressed={k === i + 1} onClick={() => setSelected(i)} className={i < k ? 'proof-included' : ''}>
+      <span>a<sub>{i + 1}</sub> = {value}</span><div className="proof-mini-grid" style={{ gridTemplateColumns: `repeat(${i + 1}, 10px)` }} aria-hidden="true">{Array.from({ length: (i + 1) ** 2 }, (_, j) => <i key={j} style={id === 'triangular' && j % (i + 1) > Math.floor(j / (i + 1)) ? { visibility: 'hidden' } : {}}/>)}</div>
+      <small>{i < k ? '計入總和' : '尚未計入'}</small>
+    </button>)}</div>
+    <div className="proof-equation" role="status">S{k} = {c.values.slice(0, k).map(f).join(' + ')} = {f(sums[k - 1])}</div>
+    <p className="proof-reason">{k === 1 ? '只有一項時，S₁ = a₁ = 1；符號意義不同，數值此時相同。' : `第 ${k} 項 a${k} = ${c.values[k - 1]}；前 ${k} 項和 S${k} = ${sums[k - 1]}，要數所有已計入的完整圖形。`}</p>
+  </div>;
+  const limit = id === 'geometric' && (c.params.a === 0 || Math.abs(c.params.r) < 1) ? (c.params.a === 0 ? 0 : c.params.a / (1 - c.params.r)) : null;
+  const extendedFib = id === 'fibonacci' ? calculate(id, { ...c.params, n: 12 }).values : [];
+  // The visible model stops at 12, but the telescoping proof needs F₁₃ and F₁₄.
+  if (id === 'fibonacci') while (extendedFib.length < c.params.n + 2) extendedFib.push(extendedFib.at(-1) + extendedFib.at(-2));
+  return <div className="proof-scene" data-proof={`${id}-sum`}>
+    <div className="proof-heading"><h3>{id === 'annuity' ? '同一個終點，逐筆加總' : '單項與部分和，分開觀察'}</h3><p>{id === 'annuity' ? `全部以 t=${c.params.n} 估值；橫軸是第 k 筆，不是第 k 年的帳戶結餘。` : '新增一項 aₖ，就是部分和 Sₖ 比 Sₖ₋₁ 改變的量。'}</p></div>
+    <SequenceChart values={sums} selected={selected} setSelected={setSelected} cumulative annuityYear={id === 'annuity' ? c.params.n : null}
+      domainValues={domainValues} limit={limit}/>
+    <div className="proof-equation">{id === 'annuity' ? `t=${c.params.n} 的 ${k} 筆存款終值小計` : `S${k}`} = {f(sums[k - 1])}</div>
+    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : `極限 S∞ = ${f(limit)}；目前還差 S∞ − S${k} = ${f(limit - sums[k - 1])}。虛線是極限，不是第 13 項。`}</p>}
+    {id === 'fibonacci' && <div className="proof-fib-sum"><h4>把遞推式改寫成相鄰兩項的差</h4><div className="proof-scroll" tabIndex="0" role="region" aria-label="斐波那契求和抵消證明"><div className="proof-telescope">{c.values.slice(0, k).map((v, i) => <span key={i}>{i > 0 ? ' + ' : ''}(<b className={i < k - 1 ? 'proof-cancel' : ''}>F{i + 3}</b> − <b className={i > 0 ? 'proof-cancel' : ''}>F{i + 2}</b>)</span>)}</div></div><p>中間的正負項相消，只剩 F{k + 2} − F₂ = {extendedFib[k + 1]} − 1 = {f(sums[k - 1])}。</p></div>}
+  </div>;
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { workedComputation } from './worked.js';
+import FinanceLab from './FinanceLab.jsx';
 
 const count = ['n', '項數 n', 1, 12, 1];
 const first = ['a', '首項 a₁', -20, 20, 'any'];
@@ -14,10 +15,12 @@ const fields = {
 };
 const visual = { square: 'sum', arithmetic: 'graph', geometric: 'sum', triangular: 'shape', fibonacci: 'graph', annuity: 'shape' };
 const targets = { arithmetic: 31, triangular: 15, annuity: 3000 };
+const financeModes = [['fv', '終值'], ['pv', '現值'], ['loan', '每月供款']];
 
-export default function WorkedLab({ id, startingParams, onShowExperiment }) {
+export default function WorkedLab({ id, startingParams, onShowExperiment, onWorked }) {
   const [draft, setDraft] = useState({ first: 1, second: 1, target: targets[id], ...startingParams });
   const [result, setResult] = useState(null);
+  const [mode, setMode] = useState('fv');
 
   function edit(key, value) {
     setDraft(previous => ({ ...previous, [key]: value }));
@@ -29,12 +32,18 @@ export default function WorkedLab({ id, startingParams, onShowExperiment }) {
     const params = { ...draft };
     for (const [key] of fields[id]) params[key] = Number(draft[key]);
     setResult({ params, steps: workedComputation(id, params) });
+    onWorked();
   }
 
   const customRecurrence = id === 'fibonacci' && result && (result.params.first !== 1 || result.params.second !== 1);
-  return <section className="lesson-card custom-worked">
-    <span className="eyebrow">動手算 · 換成你的數字</span>
+  return <section className="lesson-card custom-worked" id="lesson-worked" tabIndex="-1">
+    <span className="eyebrow">03 · 動手算，換成你的數字</span>
     <h3>用自訂數據逐步演算</h3>
+    {id === 'annuity' && <div className="lesson-actions finance-modes" role="group" aria-label="年金演算情境">
+      {financeModes.map(([value, label]) => <button type="button" key={value} className="outline-button"
+        aria-pressed={mode === value} onClick={() => setMode(value)}>{label}</button>)}
+    </div>}
+    {mode === 'fv' ? <>
     <p>先預測，再輸入一組數據。第一次只改一個數，比較哪一步、哪個量跟著變。</p>
     <form onSubmit={compute}>
       <div className="worked-fields">
@@ -54,11 +63,10 @@ export default function WorkedLab({ id, startingParams, onShowExperiment }) {
         <strong>這組數據的代入與核對</strong>
         <ol>{result.steps.map(step => <li key={step}>{step}</li>)}</ol>
         {customRecurrence ? <p>圖示只展示標準起點 1、1；上面的逐項計算使用你輸入的起點。</p> :
-          <button type="button" className="outline-button" onClick={() => {
-            onShowExperiment({ params: result.params, view: visual[id] });
-            requestAnimationFrame(() => document.getElementById('lesson-experiment')?.scrollIntoView({ block: 'start' }));
-          }}>在實驗用這組數據</button>}
+          <button type="button" className="outline-button" onClick={() =>
+            onShowExperiment({ params: result.params, view: visual[id] })}>在實驗用這組數據</button>}
       </div>}
     </div>
+    </> : <FinanceLab key={mode} mode={mode} onWorked={onWorked} />}
   </section>;
 }

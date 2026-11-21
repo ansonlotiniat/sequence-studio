@@ -1,5 +1,13 @@
 .section-tabs { flex-direction: row; }
-.guided-lesson { display: grid; gap: 18px; }
+.guided-lesson { --lesson-sticky-top: 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.lesson-stage-nav { position: sticky; top: var(--lesson-sticky-top); z-index: 5; align-self: start; background: #fff; border: 1px solid #dbe4d5; border-radius: 10px; padding: 2px 10px 6px; }
+.lesson-stage-links { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.lesson-stage-links a { color: #2a5235; display: grid; grid-auto-flow: column; justify-content: center; align-content: center; gap: 2px; min-height: 36px; font-size: 13px; font-weight: 680; text-decoration: none; white-space: nowrap; }
+.lesson-stage-links a:hover { text-decoration: underline; }
+.lesson-stage-progress { display: flex; align-items: center; justify-content: center; gap: 8px; color: #394d39; font-size: 12px; }
+.lesson-stage-progress progress { height: 8px; width: min(50%, 160px); accent-color: #446433; }
+.guided-lesson > [id] { scroll-margin-top: calc(var(--lesson-sticky-top) + 82px); }
+.lesson-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .lesson-card {
   min-width: 0;
   padding: clamp(17px, 3vw, 30px);
@@ -30,6 +38,10 @@
 .derivation { border-top: 1px solid #dbe4d5; padding: 11px 0; }
 .derivation-table { margin: 10px 0; max-width: 100%; min-width: 0; }
 .derivation-scroll { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
+.equation-scroll { background: #edf4e6; border-radius: 6px; }
+.equation-line { display: grid; grid-template-columns: minmax(max-content, 8em) max-content max-content; gap: 8px; padding: 5px 8px; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+.equation-line span:first-child { text-align: right; }
+.lesson-card .equation-reason { margin: 4px 0 8px; }
 .derivation-table table { border-collapse: collapse; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .derivation-table figcaption { text-align: left; font-size: 13px; margin-bottom: 6px; }
 .derivation-table figcaption span { display: block; color: #526a4d; font-size: 12px; }
@@ -42,6 +54,11 @@
 .worked-fields label { display: grid; gap: 4px; flex: 1 1 135px; min-width: 0; font-weight: 600; }
 .worked-fields :is(input, select) { width: 100%; min-width: 0; padding: 8px; min-height: 42px; color: inherit; background: #fff; font: inherit; font-size: 16px; border: 1px solid #acbea2; border-radius: 7px; }
 .custom-worked .worked-solution { overflow-wrap: anywhere; }
+.finance-modes [aria-pressed='true'] { background: #dce9d2; border-color: #7a9569; }
+.finance-math { white-space: nowrap; overflow-wrap: normal; }
+.amortization-table { border-collapse: collapse; width: 100%; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.amortization-table :is(th, td) { padding: 5px 8px; border: 1px solid #c2d2b8; text-align: right; }
+.amortization-table caption { text-align: left; }
 .practice-panel { font-size: 14px; }
 .practice-chapter { margin: 0; font-size: clamp(20px, 3vw, 27px); }
 .practice-panel p.practice-progress, .practice-panel .answer-format { font-size: 13px; line-height: 1.65; }
@@ -58,6 +75,7 @@
 .path-recommendation { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .proof-control { padding: 10px 16px 0; }
 @media(max-width: 740px) {
+  .guided-lesson { --lesson-sticky-top: 64px; }
   .app-shell:has(.guided-lesson, .practice-panel) .floating-tutor { display: none; }
 }
 @media(max-width: 450px) {

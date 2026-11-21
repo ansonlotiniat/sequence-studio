@@ -1,4 +1,5 @@
 import { arithmeticTerm, calculate, defaults, normalize, powerSums, recurrence } from './math.js';
+import { annuityPresentValue, amortizeLoan } from './learning/finance.js';
 
 const significantDigits = 8;
 const roundSignificant = value => Number(value.toPrecision(significantDigits));
@@ -14,7 +15,7 @@ export const skills = {
   geometric: ['運用通項', '辨認等比', '運用有限和', '解釋收斂', '求負公比的無窮和'],
   triangular: ['求三角形數', '反求層數', '解釋配對', '求多個完整三角形的點數'],
   fibonacci: ['使用遞推', '比較初始條件', '解釋求和', '求不同起點的遞推和'],
-  annuity: ['計算終值', '辨認現金流時點', '反求付款', '解釋零利率', '分辨終值、本金與利息'],
+  annuity: ['計算終值', '辨認現金流時點', '反求付款', '解釋零利率', '分辨終值、本金與利息', '折現求年金現值', '求每月供款', '辨別供款中的本金與利息'],
 };
 
 const nText = '請輸入數字；可用小數、分數或科學記數法。';
@@ -295,6 +296,36 @@ const questions = {
         [`兩筆分別生息兩年和一年；終值是 ${payment}×(1.1²+1.1)=${total}。`, `本金為 2×${payment}=${principal}，所以利息是 ${total}−${principal}=${interest}。`],
         ['先把兩筆都估值到第 2 年年末。', '問利息，不是問存摺上的全部金額。'],
         [[total, '這是兩筆合起來的終值；還要扣掉本金。'], [principal, '這是原本存入的本金，不是增加的金額。']]);
+    },
+    (_, v) => {
+      const payment = 121 * (1 + v % 7), due = v % 2 === 1;
+      const answer = Math.round(annuityPresentValue(payment, 0.10, 2, due));
+      return number(`連續兩年每年${due ? '年初' : '年末'}收到 MOP ${payment}。年折現率 10%，現值是多少澳門元？`, answer,
+        [`第一和第二筆分別在 t=${due ? '0、1' : '1、2'}；折算到 t=0 要除以相應的 1.1 次方。`,
+          `現值是兩筆折現金額的和，得 MOP ${answer}。`],
+        ['問今天值多少，不是問兩年後值多少。', '先定下兩筆款項的 t，再除以 1.1 的對應次方。'],
+        [[2 * payment, '這只加了金額，忽略其中至少一筆需要折現。'],
+          [Math.round(annuityPresentValue(payment, 0.10, 2, !due)), '你可能用了另一種收款時點；先標出 t=0 是否已收款。']], 'integer');
+    },
+    (_, v) => {
+      const principal = 20100 * (1 + v % 5), { monthlyPayment } = amortizeLoan(principal, 12, 2);
+      const answer = Math.round(monthlyPayment);
+      return number(`借款 MOP ${principal}，名義年利率 12%（按月計息），分兩個月每月底等額還清。每月供款是多少澳門元？`, answer,
+        ['月利率是 12%÷12＝1%。兩筆月底供款折算到今天是 M÷1.01 和 M÷1.01²。',
+          `兩筆現值相加等於借款本金，解得 M = ${principal}÷(1/1.01+1/1.01²) = ${answer}。`],
+        ['先把名義年利率換成月利率。', '本金等於所有供款的現值，不是直接除以期數。'],
+        [[principal / 2, '只把本金平分，等於沒有計息。'],
+          [Math.round(amortizeLoan(principal, 144, 2).monthlyPayment), '12% 是年利率；每月用 1%，不能用 12%。']], 'integer');
+    },
+    (_, v) => {
+      const principal = 20100 * (1 + v % 5), { schedule } = amortizeLoan(principal, 12, 2);
+      const { principal: repaid, interest, payment } = schedule[0];
+      return number(`借款 MOP ${principal}，名義年利率 12%（按月計息）。若第一個月底供款 MOP ${Math.round(payment)}，這一期實際歸還多少本金（澳門元）？`, Math.round(repaid),
+        [`月利率 1%；第一個月利息是 ${principal}×0.01 = ${Math.round(interest)}。`,
+          `從供款先扣利息，還本金 ${Math.round(payment)}−${Math.round(interest)} = ${Math.round(repaid)}。`],
+        ['第一期按原本金計息。', '供款分成兩部分：利息和歸還的本金。'],
+        [[Math.round(payment), '供款不是全數用來還本金；還要扣這期利息。'],
+          [Math.round(interest), '這是本期利息，不是歸還的本金。']], 'integer');
     },
   ],
 };

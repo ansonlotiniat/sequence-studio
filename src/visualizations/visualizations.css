@@ -1,0 +1,125 @@
+/* Scoped to visualization internals. The application shell owns the outer grid. */
+.lab-visualizations .visual-panel { min-width: 0; }
+.lab-visualizations .visual-canvas { display: block; padding: 24px; min-height: 0; }
+.lab-visualizations .view-switch { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 20px 8px; }
+.lab-visualizations .view-switch button { min-height: 44px; font-size: 13px; padding: 10px 12px; }
+.lab-visualizations .panel-heading { align-items: start; }
+.lab-visualizations .panel-heading strong { font-size: 14px; line-height: 1.7; }
+.lab-visualizations .panel-heading .icon-button { min-width: 44px; min-height: 44px; }
+.lab-visualizations .proof-scene { width: 100%; min-width: 0; color: #263c30; }
+.lab-visualizations .proof-heading { margin-bottom: 18px; }
+.lab-visualizations .proof-heading h3 { font-size: 19px; font-weight: 650; line-height: 1.6; letter-spacing: .02em; }
+.lab-visualizations .proof-heading p, .lab-visualizations .proof-reason { font-size: 14px; line-height: 1.9; color: #526453; }
+.lab-visualizations .proof-heading p { margin-top: 5px; }
+.lab-visualizations .proof-reason { margin-top: 12px; }
+.lab-visualizations .proof-term-picker { display: flex; flex-wrap: wrap; align-items: stretch; gap: 7px; margin: 16px 0; }
+.lab-visualizations .proof-term-picker button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; min-height: 60px; padding: 8px 11px; border: 1px solid #dce3d5; background: #fff; border-radius: 8px; color: #3e5947; font-size: 13px; gap: 3px; }
+.lab-visualizations .proof-term-picker strong { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lab-visualizations [data-proof="arithmetic"] .proof-term-picker button { min-width: 0; max-width: 100%; }
+.lab-visualizations [data-proof="arithmetic"] .proof-term-picker strong { overflow-wrap: anywhere; }
+.lab-visualizations .proof-term-picker small { font-size: 11px; color: #526453; }
+.lab-visualizations button[aria-pressed="true"] { outline: 2px solid #52715b; outline-offset: -2px; }
+.lab-visualizations .source-a { background: #e1eddf !important; color: #234c37; }
+.lab-visualizations .source-b { background: #dfedf7 !important; color: #234e6c; }
+.lab-visualizations .proof-action { min-height: 44px; border: 1px solid #b9c8af; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #365b41; background: #f7f9f3; line-height: 1.5; text-align: left; }
+.lab-visualizations .proof-primary { background: #e9f0e1; margin: 10px 0; }
+.lab-visualizations .proof-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.lab-visualizations .proof-scroll { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #a6b499 #eef2e8; padding: 8px 2px 14px; }
+.lab-visualizations .proof-unit-svg { display: block; max-width: none; margin: 8px auto; overflow: visible; }
+.lab-visualizations .proof-moving { transition: transform .7s ease-in-out; transform-origin: 0 0; }
+.lab-visualizations .proof-fill-base { fill: #759b76; background: #759b76; stroke: #3d6c46; }
+.lab-visualizations .proof-fill-new { fill: #e0ad73; background: #e0ad73; stroke: #a4672f; }
+.lab-visualizations .proof-fill-copy { fill: #79a7c8; background: #79a7c8; stroke: #355f7e; }
+.lab-visualizations .proof-svg-label { font-size: 12px; fill: #4c6251; font-family: inherit; }
+.lab-visualizations .proof-legend { display: flex; flex-wrap: wrap; gap: 9px 20px; list-style: none; margin: 16px 0; padding: 0; }
+.lab-visualizations .proof-legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #4c6251; line-height: 1.7; }
+.lab-visualizations .proof-key { flex: 0 0 12px; width: 12px; height: 12px; border: 1px solid #48654b; border-radius: 2px; }
+.lab-visualizations .proof-key.base { background: #759b76; }
+.lab-visualizations .proof-key.new { background: #e0ad73; border-color: #a4672f; }
+.lab-visualizations .proof-key.copy { background: #79a7c8; border-color: #355f7e; border-radius: 50%; }
+.lab-visualizations .proof-equation { padding: 15px 17px; background: #edf3e5; border: 1px solid #d4e1c7; border-radius: 9px; font-size: 16px; font-weight: 550; line-height: 1.9; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; margin-top: 12px; }
+.lab-visualizations .proof-table { border-collapse: separate; border-spacing: 0; font-size: 14px; margin: 10px 0; min-width: 100%; font-variant-numeric: tabular-nums; }
+.lab-visualizations .proof-table td, .lab-visualizations .proof-table th { padding: 12px 14px; min-width: 66px; text-align: center; border-bottom: 1px solid #dce4d5; white-space: nowrap; font-weight: 400; }
+.lab-visualizations .proof-table th { color: #4e6650; background: #f3f6ee; font-size: 12px; }
+.lab-visualizations .proof-table th:first-child { position: sticky; left: 0; z-index: 1; border-right: 1px solid #dce4d5; }
+.lab-visualizations .proof-total-row td { color: #2e583b; background: #e7f0df; font-weight: 600; }
+.lab-visualizations .proof-cancel { text-decoration: line-through; text-decoration-color: #a15f3f; text-decoration-thickness: 2px; color: #677767; }
+.lab-visualizations .proof-fib-build { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 22px 0; }
+.lab-visualizations .proof-fib-build > div { border: 1px solid #d5e0cb; border-radius: 9px; padding: 12px; flex: 1 1 140px; align-self: stretch; background: #fff; }
+.lab-visualizations .proof-fib-build h4 { font-size: 12px; line-height: 1.6; margin-bottom: 12px; color: #47634b; }
+.lab-visualizations .proof-fib-build > b { font-size: 20px; font-weight: 400; color: #64745a; }
+.lab-visualizations .proof-count-grid { display: grid; grid-template-columns: repeat(12, 9px); gap: 2px; width: max-content; }
+.lab-visualizations .proof-count-grid i { display: block; width: 9px; height: 9px; border-radius: 1px; }
+.lab-visualizations .proof-deposits { display: flex; gap: 10px; align-items: stretch; width: max-content; min-width: 100%; }
+.lab-visualizations .proof-deposit { flex: 1 0 114px; padding: 12px 8px; border-radius: 9px; border: 1px solid #d6e1ce; background: #fff; color: #3b5d43; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.lab-visualizations .proof-deposit strong { font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lab-visualizations .proof-deposit > span { font-size: 12px; white-space: nowrap; }
+.lab-visualizations .proof-deposit small { font-size: 12px; }
+.lab-visualizations .proof-money-track { height: 164px; width: 52px; display: flex; align-items: end; justify-content: center; border-bottom: 1px solid #93a38c; }
+.lab-visualizations .proof-money-stack { width: 38px; display: flex; flex-direction: column; justify-content: end; }
+.lab-visualizations .proof-money-stack i { display: block; width: 100%; flex-shrink: 0; }
+.lab-visualizations .proof-money-principal { background: #759b76; }
+.lab-visualizations .proof-money-interest { background: #e0ad73; }
+.lab-visualizations .proof-zero { color: #667b67; font-size: 14px; }
+.lab-visualizations .proof-timeline { display: flex; flex-wrap: wrap; gap: 8px; padding: 13px 0; font-size: 13px; line-height: 1.8; color: #3c6143; }
+.lab-visualizations .proof-scale-note { font-size: 12px; line-height: 1.8; color: #65745e; margin: 9px 0 13px; }
+.lab-visualizations .proof-chart-options { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.lab-visualizations .proof-chart-options label, .lab-visualizations .visual-playback-settings label { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: 12px; color: #425c48; }
+.lab-visualizations input[type="checkbox"] { accent-color: #4c704c; min-width: 18px; min-height: 18px; }
+.lab-visualizations .proof-chart-svg { display: block; width: 100%; min-width: 700px; max-height: none; }
+.lab-visualizations .proof-gridline { stroke: #e0e7da; stroke-width: 1; }
+.lab-visualizations .proof-zero-line { stroke: #819378; stroke-width: 1.5; }
+.lab-visualizations .proof-chart-line { fill: none; stroke: #78966a; stroke-width: 2; }
+.lab-visualizations .proof-limit-line { stroke: #a4743f; stroke-width: 1.5; stroke-dasharray: 6 4; }
+.lab-visualizations .proof-chart-dot { fill: #587b56; }
+.lab-visualizations .proof-chart-selected { fill: #b77938; stroke: #704e2d; stroke-width: 1.5; }
+.lab-visualizations .proof-chart-point { cursor: pointer; }
+.lab-visualizations .proof-chart-point:focus { outline: 2px solid #a36b30; outline-offset: 3px; }
+.lab-visualizations .proof-chart-value { fill: #704e2d; font-size: 13px; }
+.lab-visualizations .proof-chart-detail { min-height: 25px; color: #3b5d42; font-size: 14px; margin: 8px 0; }
+.lab-visualizations .proof-data { border-top: 1px solid #dce4d4; margin: 14px 0; }
+.lab-visualizations .proof-data summary { cursor: pointer; font-size: 13px; color: #496948; min-height: 44px; padding: 12px 0; }
+.lab-visualizations .proof-data p { color: #65745e; font-size: 12px; line-height: 1.8; }
+.lab-visualizations .proof-row-counts { display: flex; flex-wrap: wrap; gap: 10px 18px; padding: 10px 0; font-size: 13px; line-height: 1.8; }
+.lab-visualizations .proof-row-counts span { white-space: nowrap; }
+.lab-visualizations .proof-sum-shapes { display: flex; flex-wrap: wrap; align-items: end; gap: 9px; margin: 20px 0; }
+.lab-visualizations .proof-sum-shapes button { display: flex; align-items: center; flex-direction: column; justify-content: space-between; padding: 12px; gap: 10px; border: 1px solid #dbe4d4; border-radius: 9px; background: #f5f7f2; min-width: 72px; min-height: 100px; font-size: 12px; color: #4e674f; }
+.lab-visualizations .proof-sum-shapes .proof-included { background: #e5efdc; border-color: #a6bb94; }
+.lab-visualizations .proof-mini-grid { display: grid; gap: 1px; }
+.lab-visualizations .proof-mini-grid i { display: block; width: 10px; height: 10px; background: #759b76; }
+.lab-visualizations .proof-sum-shapes button:not(.proof-included) .proof-mini-grid i { background: #b7c5b2; }
+.lab-visualizations .proof-sum-shapes small { font-size: 11px; }
+.lab-visualizations .proof-fib-sum { border-top: 1px solid #dbe3d4; padding-top: 18px; margin-top: 20px; font-size: 14px; line-height: 1.9; }
+.lab-visualizations .proof-fib-sum h4 { font-size: 14px; }
+.lab-visualizations .proof-telescope { white-space: nowrap; padding: 12px 0; }
+.lab-visualizations .visual-playback { border-top: 1px solid #dfe6d7; padding: 18px 20px; background: #fafbf7; }
+.lab-visualizations .visual-playback-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lab-visualizations .visual-playback button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d6dfcd; border-radius: 7px; background: #fff; color: #426344; }
+.lab-visualizations .visual-playback .visual-play { gap: 8px; padding: 10px 14px; background: #e3edd9; font-size: 13px; }
+.lab-visualizations .visual-playback-count { margin-left: auto; font-size: 13px; color: #526950; font-variant-numeric: tabular-nums; }
+.lab-visualizations .visual-playback-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 10px; }
+.lab-visualizations .visual-playback-settings select { min-height: 44px; border: 1px solid #d2ddc9; border-radius: 6px; padding: 7px; font: inherit; background: #fff; color: #3f5f44; }
+.lab-visualizations .visual-playback-settings > span, .lab-visualizations .visual-playback > p { color: #65775f; font-size: 12px; line-height: 1.8; }
+.lab-visualizations .visual-playback > p { margin-top: 10px; }
+@media (max-width: 740px) {
+  .lab-visualizations .visual-canvas { padding: 18px 15px; }
+  .lab-visualizations .view-switch { margin: 0 12px 5px; }
+  .lab-visualizations .view-switch button { font-size: 12px; padding: 9px; }
+  .lab-visualizations .proof-heading h3 { font-size: 18px; }
+  .lab-visualizations .proof-equation { font-size: 15px; padding: 12px; }
+  .lab-visualizations .proof-term-picker button { min-width: 59px; padding: 8px; }
+  .lab-visualizations .proof-unit-svg { margin-left: 0; }
+  .lab-visualizations .proof-fib-build { flex-direction: column; align-items: stretch; }
+  .lab-visualizations .proof-fib-build > div { flex: none; }
+  .lab-visualizations .proof-fib-build > b { text-align: center; }
+  .lab-visualizations .proof-count-grid { grid-template-columns: repeat(12, 12px); }
+  .lab-visualizations .proof-count-grid i { width: 12px; height: 12px; }
+  .lab-visualizations .visual-playback { padding: 15px; }
+  .lab-visualizations .visual-playback-count { margin-left: 0; }
+  .lab-visualizations .proof-sum-shapes { gap: 7px; }
+  .lab-visualizations .proof-sum-shapes button { padding: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-visualizations .proof-moving { transition: none; }
+  .lab-visualizations * { scroll-behavior: auto !important; }
+}

@@ -43,7 +43,7 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
     const a = document.createElement('a'); a.href = url; a.download = `${id}-n${p.n}.csv`; a.click(); URL.revokeObjectURL(url);
   }
   return <div className="lab-layout lab-visualizations">
-    <aside className="controls-panel">
+    <aside className="controls-panel" onFocusCapture={() => setPlaying(false)}>
       <div className="control-heading"><span>你的實驗，自己決定</span><span className="control-tag">LIVE</span></div><p>一次改一個數字，再用圖形解釋原因。</p>
       <div className="term-control"><label htmlFor="n-range">{id === 'annuity' ? '存款期數' : '觀察項數'} <span>n</span></label><div className="stepper"><button aria-label="減少一項" disabled={p.n === 1} onClick={() => update('n', p.n - 1)}><Minus size={16}/></button><input aria-label="項數" type="number" min="1" max="12" value={p.n} onChange={e => update('n', e.target.value)}/><button aria-label="增加一項" disabled={p.n === 12} onClick={() => update('n', p.n + 1)}><Plus size={16}/></button></div></div>
       <input id="n-range" aria-label="觀察項數滑桿" className="range" type="range" min="1" max="12" value={p.n} onChange={e => update('n', e.target.value)}/><div className="range-labels"><span>1 {id === 'annuity' ? '年' : '項'}</span><span>12 {id === 'annuity' ? '年' : '項'}</span></div>
@@ -76,7 +76,7 @@ function NumberControl({ label, value, onChange, min, max, step }) {
   function commit() {
     if (!draft.trim() || !Number.isFinite(Number(draft))) { setDraft(String(value)); return; }
     const bounded = Math.min(max, Math.max(min, Number(draft)));
-    setDraft(String(bounded)); onChange(bounded);
+    setDraft(String(bounded)); if (bounded !== value) onChange(bounded);
   }
   return <label className="number-control"><span>{label}</span><input type="number" value={draft} min={min} max={max} step={step} title="輸入後按 Enter 或離開欄位套用；Esc 還原" onChange={e => setDraft(e.target.value)} onBlur={commit} onKeyDown={e => {
     if (e.key === 'Enter') { e.preventDefault(); commit(); }

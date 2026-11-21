@@ -1,0 +1,58 @@
+.guided-lesson { display: grid; gap: 18px; }
+.lesson-card {
+  min-width: 0;
+  padding: clamp(17px, 3vw, 30px);
+  background: #fff;
+  border: 1px solid #dbe4d5;
+  border-radius: 13px;
+  color: #394d39;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.lesson-card h3, .lesson-card h2, .worked-example h4 { margin: 6px 0 12px; color: #253d31; }
+.lesson-card h3 { font-size: clamp(19px, 2.4vw, 23px); }
+.lesson-card :is(ul, ol), .practice-panel :is(ul, ol) { margin: 10px 0; padding-inline-start: 1.5em; }
+.lesson-card li + li, .practice-panel li + li { margin-top: .45em; }
+.lesson-card p { margin: 10px 0; }
+.lesson-options, .practice-choices { border: 0; margin: 14px 0; padding: 0; min-width: 0; }
+.lesson-options legend, .practice-choices legend { margin-bottom: 8px; font-weight: 650; }
+.lesson-options button { display: inline-flex; margin: 0 8px 6px 0; }
+.lesson-card .outline-button, .lesson-card .primary-button, .practice-panel .outline-button, .practice-panel .primary-button { min-height: 42px; font-size: 13px; }
+.lesson-options button[aria-pressed='true'] { background: #dce9d2; border-color: #7a9569; }
+.lesson-card .lesson-feedback { background: #edf4e6; border-radius: 8px; padding: 10px 13px; }
+.lesson-feedback svg { vertical-align: middle; }
+.prediction-label { display: block; font-weight: 600; margin-top: 15px; }
+.lesson-card textarea { width: 100%; display: block; margin: 8px 0 13px; padding: 10px; color: inherit; font: inherit; border: 1px solid #acbea2; border-radius: 7px; resize: vertical; }
+.lesson-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sequence-basics { margin-bottom: 12px; }
+.guided-lesson .sequence-basics { margin: 0; }
+.derivation { border-top: 1px solid #dbe4d5; padding: 11px 0; }
+.derivation-table { overflow-x: auto; max-width: 100%; }
+.derivation-table table { border-collapse: collapse; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.derivation-table caption { text-align: left; font-size: 13px; margin-bottom: 6px; }
+.derivation-table :is(th, td) { padding: 4px 9px; text-align: center; border: 1px solid #dbe4d5; }
+.derivation-table th { background: #edf4e6; text-align: left; }
+.lesson-card summary { cursor: pointer; font-weight: 680; color: #2a5235; }
+.lesson-card .worked-example { margin-top: 12px; font-size: 14px; }
+.practice-panel { font-size: 14px; }
+.practice-chapter { margin: 0; font-size: clamp(20px, 3vw, 27px); }
+.practice-panel p.practice-progress, .practice-panel .answer-format { font-size: 13px; line-height: 1.65; }
+.practice-panel .answer-format { margin: 0 0 8px; }
+.practice-choices label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; margin-bottom: 7px; border: 1px solid #dbe4d5; border-radius: 8px; font-size: 14px; line-height: 1.55; }
+.practice-choices input { margin-top: 4px; accent-color: #446433; }
+.practice-choices label:has(:checked) { background-color: #e8f1df; border-color: #7a9569; }
+.practice-panel .answer-row input { min-width: 0; font-size: 16px; }
+.practice-panel .hint-content, .worked-solution { line-height: 1.7; }
+.practice-panel ol.hint-content { padding: 10px 12px 10px 30px; }
+.worked-solution { padding: 12px 16px; margin: 14px 0; border-radius: 8px; background: #edf4e6; }
+.practice-actions, .practice-links { margin-top: 14px; }
+.practice-links .text-button { min-height: 36px; font-size: 13px; }
+.path-recommendation { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.proof-control { padding: 10px 16px 0; }
+@media(max-width: 740px) {
+  .app-shell:has(.guided-lesson, .practice-panel) .floating-tutor { display: none; }
+}
+@media(max-width: 450px) {
+  .practice-panel .answer-row { flex-wrap: wrap; }
+  .practice-panel .answer-row input { width: 100%; flex: 1 1 100%; }
+}

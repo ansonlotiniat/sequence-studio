@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, normalize, makeQuiz, defaults } from '../src/math.js';
+import { calculate, normalize, format } from '../src/math.js';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} ≠ ${b}`);
 test('all 12 square sums equal the closed form; odd layers telescope',()=>{for(let n=1;n<=12;n++){const c=calculate('square',{n});assert.equal(c.last,n*n);assert.equal(c.sum,n*(n+1)*(2*n+1)/6);assert.equal(n*n-(n-1)**2,2*n-1);}});
 test('triangular sums and adjacent identity',()=>{for(let n=1;n<=12;n++){const c=calculate('triangular',{n});assert.equal(c.sum,n*(n+1)*(n+2)/6);assert.equal(c.last+(n-1)*n/2,n*n);}});
@@ -9,4 +9,4 @@ test('geometric handles r=0,1,-1 and fractional ratios',()=>{for(const r of [0,1
 test('Fibonacci begins with two ones and satisfies sum identity',()=>{assert.deepEqual(calculate('fibonacci',{n:8}).values,[1,1,2,3,5,8,13,21]);for(let n=1;n<=10;n++)assert.equal(calculate('fibonacci',{n}).sum,calculate('fibonacci',{n:n+2}).last-1);});
 test('annuity ordinary vs due, zero rate, zero payment and one period',()=>{const p={n:5,payment:1000,rate:5};const c=calculate('annuity',p);near(c.sum,1000*(1.05**5-1)/.05);near(calculate('annuity',{...p,due:true}).sum,c.sum*1.05);near(calculate('annuity',{...p,rate:0}).sum,5000);near(calculate('annuity',{...p,payment:0}).sum,0);near(calculate('annuity',{...p,n:1}).sum,1000);});
 test('untrusted parameters are bounded and remain finite',()=>{const p=normalize({n:100,a:Infinity,r:-200,rate:NaN,payment:-1});assert.equal(p.n,12);assert.equal(p.a,2);assert.equal(p.r,-3);assert.equal(p.rate,5);assert.equal(p.payment,0);});
-test('quiz is derived from the current user parameters',()=>{assert.equal(makeQuiz('square',defaults).answer,36);assert.equal(makeQuiz('geometric',{...defaults,a:3,r:-1}).answer,-3);});
+test('small nonzero terms remain visibly nonzero',()=>{assert.equal(format(0.00002),'2.000e-5');assert.equal(format(0),'0');});

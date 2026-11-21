@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, geometricTail, arithmeticPairTotal, arithmeticPartialSum, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
-import { calculate } from '../src/math.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
+import { arithmeticPairTotal, arithmeticPartialSum, calculate } from '../src/math.js';
 
 test('square decomposition conserves area and counts its corner only once, including n=1', () => {
   for (let n = 1; n <= 12; n++) {
@@ -69,6 +69,10 @@ test('decimal arithmetic pairs cancel consistently without erasing genuinely tin
   assert.equal(arithmeticPairTotal(-0.3, 0.1, 7), 0);
   assert.equal(arithmeticPartialSum(-0.3, 0.1, 7), 0);
   assert.equal(arithmeticPairTotal(0.3, -0.1, 7), 0);
+  const centered = calculate('arithmetic', { a: -0.3, d: 0.1, n: 7 });
+  assert.equal(centered.values[3], 0);
+  assert.equal(centered.sum, 0);
+  assert.equal(centered.sum, arithmeticPartialSum(-0.3, 0.1, 7));
   assert.ok(Math.abs(arithmeticPartialSum(1e-20, 0, 12) / 12e-20 - 1) < 1e-14);
   for (const a of [-10, -0.3, 0, 0.2, 1e-20]) for (const d of [-1, -0.1, 0, 0.1, 3]) for (const n of [1, 7, 12]) {
     const expected = calculate('arithmetic', { a, d, n }).sum;

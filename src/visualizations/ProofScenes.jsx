@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { squareTiles, triangleCopies, shiftedTerms, arithmeticPairTotal, arithmeticPartialSum, visualFormat as f } from './proofModels.js';
+import { arithmeticPairTotal } from '../math.js';
+import { squareTiles, triangleCopies, shiftedTerms, visualFormat as f } from './proofModels.js';
 
 export function Legend({ items }) {
   return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{text}</li>)}</ul>;
@@ -63,7 +64,7 @@ export function ArithmeticProof({ c, selected, setSelected }) {
   const [paired, setPaired] = useState(false);
   const { values, params: p } = c, k = selected ?? p.n - 1;
   const pairTotal = arithmeticPairTotal(p.a, p.d, p.n);
-  const sum = arithmeticPartialSum(p.a, p.d, p.n);
+  const sum = c.sum;
   return <div className="proof-scene" data-proof="arithmetic">
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected}/>

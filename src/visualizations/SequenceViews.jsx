@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
-import { calculate } from '../math.js';
-import { arithmeticPartialSum, chartDomain, geometricTail, visualFormat as f } from './proofModels.js';
+import { arithmeticPartialSum, calculate } from '../math.js';
+import { chartDomain, geometricTail, visualFormat as f } from './proofModels.js';
 import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 
 export function ShapeView({ id, c, proof, setProof, selected, setSelected }) {

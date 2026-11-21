@@ -35,18 +35,6 @@ export function geometricTail(a, r, k) {
   return Math.abs(r) < 1 ? a * r ** k / (1 - r) : null;
 }
 
-export function arithmeticPairTotal(a, d, n) {
-  const start = 2 * a, change = (n - 1) * d, pair = start + change;
-  // Only suppress cancellation within the rounding error of these operations,
-  // never a fixed epsilon that would turn genuinely tiny terms into zero.
-  const roundoff = 2 * Number.EPSILON * (Math.abs(start) + Math.abs(change));
-  return Math.abs(pair) <= roundoff ? 0 : pair;
-}
-
-export function arithmeticPartialSum(a, d, n) {
-  return n * arithmeticPairTotal(a, d, n) / 2;
-}
-
 export function visualFormat(value) {
   if (value === 0) return '0';
   if (Math.abs(value) < 0.001 || Math.abs(value) >= 1e7) return value.toExponential(3);

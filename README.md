@@ -33,9 +33,9 @@ npm start
 ## 公開部署到 Vercel
 
 1. 匯入此 GitHub repository，使用 Vite framework preset；build 為 `npm run build`，output 為 `dist`。
-2. 在 **Project → Settings → Environment Variables** 設定 server-only 的 `GEMINI_API_KEY`，可選 `GEMINI_MODEL`（預設 `gemini-2.5-flash`）。不要使用 `VITE_` 前綴，不要把實際金鑰寫進 repo。
+2. 在 **Project → Settings → Environment Variables** 設定 server-only 的 `GEMINI_API_KEY`，可選 `GEMINI_MODEL`（預設 `gemini-3.5-flash-lite`，已通過實際對話與建議設定測試）。不要使用 `VITE_` 前綴，不要把實際金鑰寫進 repo。
 3. 重新部署；停用 Deployment Protection 的 Vercel Authentication，使老師可以不登入開啟 production URL。
-4. 先檢查 `/api/health` 的 `ai` 為 `true`，再實際問一個數學問題。模型不可用時，可把 `GEMINI_MODEL` 改成帳戶支援的 Gemini 文字模型後重新部署。
+4. 先檢查 `/api/health` 的 `ai` 為 `true`，再實際問一個數學問題。模型不可用時，可把 `GEMINI_MODEL` 改成帳戶支援的 Gemini 文字模型後重新部署。Google 已對新用戶停用部分舊模型；模型列表中出現不代表該帳戶仍可生成內容。
 
 `api/tutor.js` 是 Vercel function；`server.js` 提供等價的本機 Node server。純 GitHub Pages 不能執行此後端，因此不應把只有靜態前端的部署說成已具備 AI。
 

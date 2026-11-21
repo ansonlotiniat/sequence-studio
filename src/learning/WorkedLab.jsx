@@ -43,7 +43,7 @@ export default function WorkedLab({ id, startingParams, onShowExperiment, onWork
       {financeModes.map(([value, label]) => <button type="button" key={value} className="outline-button"
         aria-pressed={mode === value} onClick={() => setMode(value)}>{label}</button>)}
     </div>}
-    {mode === 'fv' ? <>
+    <div hidden={mode !== 'fv'}>
     <p>先預測，再輸入一組數據。第一次只改一個數，比較哪一步、哪個量跟著變。</p>
     <form onSubmit={compute}>
       <div className="worked-fields">
@@ -67,6 +67,9 @@ export default function WorkedLab({ id, startingParams, onShowExperiment, onWork
             onShowExperiment({ params: result.params, view: visual[id] })}>在實驗用這組數據</button>}
       </div>}
     </div>
-    </> : <FinanceLab key={mode} mode={mode} onWorked={onWorked} />}
+    </div>
+    {id === 'annuity' && financeModes.slice(1).map(([value]) => <div key={value} hidden={mode !== value}>
+      <FinanceLab mode={value} onWorked={onWorked} />
+    </div>)}
   </section>;
 }

@@ -80,6 +80,6 @@ function NumberControl({ label, value, onChange, min, max, step }) {
   }
   return <label className="number-control"><span>{label}</span><input type="number" value={draft} min={min} max={max} step={step} title="輸入後按 Enter 或離開欄位套用；Esc 還原" onChange={e => setDraft(e.target.value)} onBlur={commit} onKeyDown={e => {
     if (e.key === 'Enter') { e.preventDefault(); commit(); }
-    if (e.key === 'Escape') { e.preventDefault(); setDraft(String(value)); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setDraft(String(value)); }
   }}/></label>;
 }

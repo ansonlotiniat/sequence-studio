@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { arithmeticPicture, cancellationBlocks, formatIndex, geometricAreas, signedLogScale, visualFormat as f } from './proofModels.js';
+import { arithmeticPicture, cancellationBlocks, formatIndex, geometricAreas, proofNumber, proofPartialSums, signedLogScale, proofFormat as f } from './proofModels.js';
 
 function subtractNumber(left, right) {
   return `${left} ${right < 0 ? '+' : '−'} ${f(Math.abs(right))}`;
@@ -15,7 +15,7 @@ export function ScaleToggle({ log, setLog }) {
 
 export function ArithmeticPicture({ c }) {
   const [step, setStep] = useState(0);
-  const p = c.params, model = arithmeticPicture(c.values, p.a);
+  const p = c.params, model = arithmeticPicture(c.values, p.a, c.pairTotal);
   const { height, positive, unitBlocks } = model;
   const max = Math.max(1, ...c.values.map(Math.abs), Math.abs(height));
   const unit = 16, colWidth = 16, gap = 26, inset = 12;
@@ -28,7 +28,7 @@ export function ArithmeticPicture({ c }) {
     `第 k 欄是 aₖ = a₁ + (k−1)d。${p.d >= 0 && p.a > 0 ? '深綠是首項，淺綠是逐次增加的部分。' : '公差為負時，後面的柱逐次變短；不把減少量畫成新增方塊。'}${unitBlocks ? '每格面積為 1。' : '使用等比例柱，不以整格冒充小數或負數。'}`,
     positive ? '右邊是同一組柱旋轉半周：順序倒轉，柱從上緣向下伸展。兩份總和相同。' : '右邊另列倒序的帶符號柱；本組不作旋轉面積拼圖。兩份總和相同。',
     positive ? `把倒轉的一份向左平移，每欄上、下恰好接合。每對高度都是 a₁+aₙ = ${f(height)}。` : '面積拼合只適用於全為正的項。本組含零或負項，保留帶符號的柱；請以下方數值核對表檢查首尾配對，不把負數當面積。',
-    `倒寫配對有 ${p.n} 對：2Sₙ = n(a₁+aₙ)。代入：2S${formatIndex(p.n)} = ${p.n} × (${subtractNumber(f(p.a), -c.last)}) = ${f(2 * c.sum)}，所以 S${formatIndex(p.n)} = ${f(c.sum)}。`,
+    `倒寫配對有 ${p.n} 對：2Sₙ = n(a₁+aₙ)。代入：2S${formatIndex(p.n)} = ${p.n} × (${subtractNumber(f(p.a), -c.last)}) = ${f(c.doubleSum)}，所以 S${formatIndex(p.n)} = ${f(c.sum)}。`,
   ];
   const assembled = step >= 2 && positive;
   return <section className="sequence-picture" aria-label="等差階梯拼圖"><h4>兩份階梯，拼成長方形</h4><Steps {...{ step, setStep }} count={4}>{captions[step]}</Steps>
@@ -50,7 +50,7 @@ export function ArithmeticPicture({ c }) {
       {assembled && <rect x={inset - 1} y={inset - 1} width={p.n * colWidth} height={height * unit + 1} fill="none" stroke="#233f31" strokeWidth="2"/>}
     </svg>
     {!positive && <p className="picture-warning">本圖不是正面積證明；數值核對仍然成立。</p>}
-    {step === 3 && <div className="proof-equation">2S{formatIndex(p.n)} = {p.n} × {height < 0 ? `(${f(height)})` : f(height)} = {f(2 * c.sum)}<br/>S{formatIndex(p.n)} = {f(c.sum)}</div>}
+    {step === 3 && <div className="proof-equation">2S{formatIndex(p.n)} = {p.n} × {height < 0 ? `(${f(height)})` : f(height)} = {f(c.doubleSum)}<br/>S{formatIndex(p.n)} = {f(c.sum)}</div>}
   </section>;
 }
 
@@ -58,8 +58,8 @@ export function GeometricPicture({ c }) {
   const [step, setStep] = useState(0);
   const [log, setLog] = useState(false);
   const p = c.params, area = p.a > 0 && p.r > 0 && p.r < 1;
-  const term = Math.min(step + 1, p.n), sum = c.values.slice(0, term).reduce((a, b) => a + b, 0);
-  const limit = Math.abs(p.r) < 1 ? p.a / (1 - p.r) : null;
+  const term = Math.min(step + 1, p.n), sum = c.partialSums[term - 1];
+  const limit = Math.abs(p.r) < 1 ? proofNumber(p.a / (1 - p.r)) : null;
   const { pieces, remaining } = geometricAreas(term, p.r);
   const scale = signedLogScale(c.values), values = log ? c.values.map(scale.map) : c.values;
   const max = Math.max(1e-20, ...values.map(Math.abs));
@@ -93,8 +93,7 @@ export function GeometricPicture({ c }) {
 }
 
 function AlternatingSums({ values, limit }) {
-  let sum = 0;
-  const sums = values.map(v => (sum += v)), max = Math.max(1e-20, Math.abs(limit), ...sums.map(Math.abs));
+  const sums = proofPartialSums(values), max = Math.max(1e-20, Math.abs(limit), ...sums.map(Math.abs));
   const y = v => 140 - v / max * 110;
   return <><p>{values.every(v => v === 0) ? '首項為零，所有部分和都在零的位置，沒有交替振幅。' : '部分和折線在極限兩側交替靠近；'}虛線是 S∞ = {f(limit)}。</p><svg className="sequence-picture-svg" viewBox="0 0 360 270" role="img" aria-label="交錯等比部分和與極限"><line x1="20" x2="340" y1={y(limit)} y2={y(limit)} stroke="#9c6437" strokeDasharray="5 4"/><polyline points={sums.map((v, i) => `${30 + i * 300 / Math.max(1, sums.length - 1)},${y(v)}`).join(' ')} fill="none" stroke="#426d4c" strokeWidth="2"/>{sums.map((v, i) => <circle key={i} cx={30 + i * 300 / Math.max(1, sums.length - 1)} cy={y(v)} r="4" fill="#426d4c"><title>S{formatIndex(i + 1)} = {f(v)}</title></circle>)}</svg></>;
 }

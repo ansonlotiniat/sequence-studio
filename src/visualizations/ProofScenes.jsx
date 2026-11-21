@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { arithmeticPairTotal } from '../math.js';
-import { squareTiles, triangleCopies, shiftedTerms, visualFormat as f } from './proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, proofFormat, visualFormat as f } from './proofModels.js';
 import { ArithmeticPicture, GeometricPicture } from './SequencePictures.jsx';
 import { SquareSumExplorer, AnnuityTimeline } from './LearningModels.jsx';
 
@@ -92,31 +91,31 @@ export function TriangleProof({ c, proof, setProof }) {
 export function ArithmeticProof({ c, selected, setSelected }) {
   const [paired, setPaired] = useState(false);
   const { values, params: p } = c, k = selected ?? p.n - 1;
-  const pairTotal = arithmeticPairTotal(p.a, p.d, p.n);
+  const f = proofFormat, pairTotal = c.pairTotal;
   const sum = c.sum;
   const decimal = !Number.isInteger(p.a) || !Number.isInteger(p.d);
   return <div className="proof-scene" data-proof="arithmetic">
     <ArithmeticPicture key={JSON.stringify(p)} c={c}/>
     <h4>數值核對</h4>
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
-    <TermPicker values={values} selected={k} onSelect={setSelected} formatValue={String}/>
-    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : `a${k + 1} − a${k} = d；本次公差 d = ${String(p.d)}`}</p>
+    <TermPicker values={values} selected={k} onSelect={setSelected} formatValue={f}/>
+    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : `a${k + 1} − a${k} = d；本次公差 d = ${f(p.d)}`}</p>
     <button className="proof-action proof-primary" aria-expanded={paired} onClick={() => setPaired(!paired)}>{paired ? '收起配對結果，再預測一次' : '倒寫配對，檢查每對的和'}</button>
     <div className="proof-scroll" tabIndex="0" role="region" aria-label="正寫與倒寫配對表"><table className="proof-table"><thead><tr><th scope="col">位置</th>{values.map((_, i) => <th scope="col" key={i}>{i + 1}</th>)}</tr></thead><tbody>
-      <tr><th scope="row">正寫 Sₙ</th>{values.map((v, i) => <td key={i} className={i === k ? 'source-a' : ''}>{String(v)}</td>)}</tr>
-      <tr><th scope="row">倒寫 Sₙ</th>{values.map((_, i) => <td key={i} className={i === k ? 'source-b' : ''}>{String(values[p.n - i - 1])}</td>)}</tr>
-      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((_, i) => <td key={i}>{String(pairTotal)}</td>)}</tr>}
+      <tr><th scope="row">正寫 Sₙ</th>{values.map((v, i) => <td key={i} className={i === k ? 'source-a' : ''}>{f(v)}</td>)}</tr>
+      <tr><th scope="row">倒寫 Sₙ</th>{values.map((_, i) => <td key={i} className={i === k ? 'source-b' : ''}>{f(values[p.n - i - 1])}</td>)}</tr>
+      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((_, i) => <td key={i}>{f(pairTotal)}</td>)}</tr>}
     </tbody></table></div>
     <Legend items={[[ 'base', '正寫的一份總和' ], [ 'copy', '倒寫的另一份總和' ]]}/>
-    <Equation>{paired ? decimal ? `2S${p.n} = ${p.n}(a₁ + a${p.n})；代入目前參數：S${p.n} ≈ ${String(sum)}` : `2S${p.n} = ${p.n} × (${f(values[0])} + ${f(c.last)}) = ${f(2 * sum)}；S${p.n} = ${f(sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
-    {decimal && <p className="proof-scale-note">小數表保留可表示的有效位數；數值可能為近似值，恆等式以符號為準。離開輸入框後會顯示實際採用的參數。</p>}
+    <Equation>{paired ? decimal ? `2S${p.n} = ${p.n}(a₁ + a${p.n})；代入目前參數：S${p.n} ≈ ${f(sum)}` : `2S${p.n} = ${p.n} × ${f(pairTotal)} = ${f(c.doubleSum)}；S${p.n} = ${f(sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
+    <p className="proof-scale-note">顯示值最多保留 10 位有效數字，略去浮點誤差；原始輸入與計算不變。恆等式以符號為準。</p>
     <p className="proof-reason">{p.n === 1 ? '只有一項時，也把同一項寫兩次：2S₁ = 2a₁，再除以 2。' : '即使公差為負或跨過零，倒寫後仍是一增一減、互相抵消；不是把負值當成面積。'}</p>
   </div>;
 }
 
 export function GeometricProof({ c }) {
   const [reveal, setReveal] = useState(false);
-  const p = c.params, columns = shiftedTerms(c.values, p.r);
+  const p = c.params, columns = shiftedTerms(c.values, p.r), f = proofFormat;
   return <div className="proof-scene" data-proof="geometric">
     <GeometricPicture key={JSON.stringify(p)} c={c}/>
     <h4>錯位相減數值核對</h4>

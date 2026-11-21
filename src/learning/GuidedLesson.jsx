@@ -68,12 +68,15 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
         <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => showPreset(preset, onPreset)}>{preset.label}</button>)}</div>
       </>}
     </section>
-    <div id="lesson-experiment">{observing && (directSquareMission ? <section className="lesson-card">
+    <div id="lesson-experiment" tabIndex={-1} role="region" aria-label="數列實驗">{observing && (directSquareMission ? <section className="lesson-card">
       <SquareSumLesson n={3} onComplete={setSquareCheck} />
       {squareCheck?.correct && <p className="lesson-feedback" role="status">已核對兩種計數。試改成 n=4，看看增加的是一圈還是一整層。</p>}
     </section> : children)}</div>
     <p className="lesson-card"><strong>探索任務：</strong>{depth.mission}</p>
-    <WorkedLab id={id} startingParams={lesson.presets[0].params} onShowExperiment={preset => showPreset(preset, onOpenExperiment)} />
+    <WorkedLab id={id} startingParams={lesson.presets[0].params} onShowExperiment={preset => {
+      showPreset(preset, onOpenExperiment);
+      requestAnimationFrame(() => document.getElementById('lesson-experiment')?.focus({ preventScroll: true }));
+    }} />
     <section className="lesson-card" id="explanation">
       <span className="eyebrow">03 · 推導與例題</span>
       <h3>從看見，到理解</h3>

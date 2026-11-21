@@ -39,6 +39,13 @@ function reply(res, status, data) {
   res.setHeader('Cache-Control', 'no-store');
   res.end(JSON.stringify(data));
 }
+export function clientAddress(req) {
+  // Only Vercel's edge overwrites these headers; direct Node clients can forge them.
+  const forwarded = process.env.VERCEL === '1'
+    ? req.headers['x-vercel-forwarded-for'] || req.headers['x-forwarded-for']
+    : null;
+  return String(forwarded || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+}
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return reply(res, 405, {error:'只接受 POST 請求。'}); }
   if (!req.headers['content-type']?.includes('application/json')) return reply(res,415,{error:'請使用 JSON 格式。'});
@@ -50,7 +57,7 @@ export default async function handler(req, res) {
   try { input = parseInput(typeof req.body === 'string' ? JSON.parse(req.body) : req.body); }
   catch { return reply(res,400,{error:'問題或實驗設定格式不正確。問題請控制在 1,500 字以內。'}); }
   if (!process.env.GEMINI_API_KEY) return reply(res,503,{error:'AI 學伴尚未連接。管理者需在伺服器設定 GEMINI_API_KEY；所有互動實驗仍可使用。請勿在對話輸入金鑰。'});
-  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0];
+  const ip = clientAddress(req);
   const now = Date.now();
   for (const [key, value] of buckets) if (now - value.start > 60000) buckets.delete(key);
   const bucket = buckets.get(ip) || {start:now,count:0};

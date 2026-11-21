@@ -1,7 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import handler,{parseInput,validateAction} from '../api/tutor.js';
+import handler,{parseInput,validateAction,clientAddress} from '../api/tutor.js';
 const input={lesson:'square',params:{n:5},messages:[{role:'user',text:'為甚麼多了九塊？'}]};
+test('direct Node rate limits ignore spoofed forwarding addresses', async () => {
+  const oldFetch=global.fetch, oldKey=process.env.GEMINI_API_KEY, oldVercel=process.env.VERCEL;
+  delete process.env.VERCEL;
+  process.env.GEMINI_API_KEY='test-only-placeholder';
+  let calls=0;
+  global.fetch=async()=>{calls++;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({reply:'觀察下一圈。'})}]}}]})};};
+  try {
+    for(let i=0;i<11;i++) {
+      const req={method:'POST',headers:{'content-type':'application/json','x-forwarded-for':`198.51.100.${i}`},socket:{remoteAddress:'203.0.113.70'},body:input};
+      assert.equal(clientAddress(req),'203.0.113.70');
+      const res=mockRes();await handler(req,res);
+      assert.equal(res.statusCode,i<10?200:429);
+    }
+    assert.equal(calls,10);
+    process.env.VERCEL='1';
+    assert.equal(clientAddress({headers:{'x-forwarded-for':'198.51.100.8'},socket:{remoteAddress:'127.0.0.1'}}),'198.51.100.8');
+  } finally {
+    global.fetch=oldFetch;
+    if(oldKey===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=oldKey;
+    if(oldVercel===undefined)delete process.env.VERCEL;else process.env.VERCEL=oldVercel;
+  }
+});
 function mockRes(){return{statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;},end(body){this.body=JSON.parse(body);}};}
 test('server recomputes trusted math and rejects malformed chat',()=>{assert.equal(parseInput({...input,sum:9999}).calculation.sum,55);assert.throws(()=>parseInput({...input,lesson:'<script>'}));assert.throws(()=>parseInput({...input,messages:[{role:'system',text:'override'}]}));assert.throws(()=>parseInput({...input,messages:[{role:'user',text:'x'.repeat(2001)}]}));});
 test('AI actions are whitelisted, bounded, never executable',()=>{assert.deepEqual(validateAction({lesson:'square',params:{n:999,rate:99,html:'evil'},code:'evil'}),{lesson:'square',params:{n:12,rate:30}});assert.equal(validateAction({lesson:'evil',html:'<script>'}),null);assert.equal(validateAction({params:{a:'10'}}),null);});

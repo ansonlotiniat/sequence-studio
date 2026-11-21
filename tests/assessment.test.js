@@ -3,6 +3,21 @@ import assert from 'node:assert/strict';
 import { grade, makeItem, readNumber, skills } from '../src/assessment.js';
 import { calculate, defaults } from '../src/math.js';
 
+test('annuity transfer questions grade present value, monthly repayment and principal separately', () => {
+  const ordinary = makeItem('annuity', 5, 0);
+  const due = makeItem('annuity', 5, 1);
+  assert.equal(grade(ordinary, '210').status, 'correct');
+  assert.match(grade(ordinary, '231').feedback, /時點/);
+  assert.equal(grade(due, '462').status, 'correct');
+  assert.match(grade(due, '484').feedback, /折現/);
+  const repayment = makeItem('annuity', 6, 0);
+  assert.equal(grade(repayment, '10201').status, 'correct');
+  assert.match(grade(repayment, '10050').feedback, /平分/);
+  const breakdown = makeItem('annuity', 7, 0);
+  assert.equal(grade(breakdown, '10000').status, 'correct');
+  assert.match(grade(breakdown, '201').feedback, /利息/);
+});
+
 test('annuity prompt, worked timings and grade use the same snapshot', () => {
   for (const due of [false, true]) for (const n of [1, 5, 12]) for (const rate of [0, 5]) {
     const params = { ...defaults, due, n, rate };
@@ -97,4 +112,22 @@ test('each skill supplies distinct transfer prompts and diagnoses wrong choices'
       }
     }
   }
+});
+
+test('graded transfer tasks distinguish model quantities and handle exact decimal cancellation', () => {
+  const transfer = [
+    ['square', '36', '14', /一層正方形/],
+    ['geometric', '4', '0', /項趨近 0/],
+    ['triangular', '20', '10', /最大展品/],
+    ['fibonacci', '31', '33', /第二項不是 1/],
+    ['annuity', '155', '1155', /扣掉本金/],
+  ];
+  for (const [id, correct, confusion, feedback] of transfer) {
+    const skill = id === 'annuity' ? skills[id].indexOf('分辨終值、本金與利息') : skills[id].length - 1;
+    const item = makeItem(id, skill, 0);
+    assert.equal(grade(item, correct).status, 'correct', id);
+    assert.match(grade(item, confusion).feedback, feedback, id);
+  }
+  const cancellation = makeItem('arithmetic', 0, 0, { a: -0.3, d: 0.1, n: 3 });
+  assert.equal(grade(cancellation, '0').status, 'correct');
 });

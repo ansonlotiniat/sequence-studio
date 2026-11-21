@@ -13,7 +13,7 @@ export default function Practice({ id, practice, onChange, onLab, onLearn, onNex
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [item.id, finished]);
 
   if (finished) return <section className="quiz-panel practice-panel">
-    <span className="eyebrow">REVIEW · 回顧</span>
+    <span className="eyebrow">本章回顧</span>
     <h2 ref={heading} tabIndex="-1">已通過本章練習</h2>
     <p>你已獨立答對 {total} 個學習重點。隔一段時間用另一組數據試一次，比重做同一題更能檢查理解。</p>
     <ul>{skills[id].map(skill => <li key={skill}>{skill}</li>)}</ul>
@@ -29,8 +29,9 @@ export default function Practice({ id, practice, onChange, onLab, onLearn, onNex
   }
 
   return <section className="quiz-panel practice-panel">
-    <span className="eyebrow">YOUR TURN · {item.label}</span>
-    <p className="practice-progress">已獨立答對 {practice.independent.length} / {total} 個重點</p>
+    <span className="eyebrow">輪到你 · {item.label}</span>
+    <p className="practice-progress">本輪已獨立答對 {practice.independent.length} / {total} 個重點
+      {practice.mastered?.length > 0 && `；先前已通過 ${practice.mastered.length} 個重點`}</p>
     <h2 ref={heading} tabIndex="-1">{item.prompt}</h2>
     <form noValidate onSubmit={e => { e.preventDefault(); onChange(submitPractice(id, practice)); }}>
       {item.options ? <fieldset className="practice-choices" disabled={correct || revealed}>

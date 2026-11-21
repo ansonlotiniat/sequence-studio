@@ -50,3 +50,44 @@ test('stored draft, scenario and valid chapter URL resume; old progress is explo
   const legacy = { getItem: key => key === 'sequence-progress' ? '["square","other"]' : null };
   assert.deepEqual(readStudy(legacy).chapters, { square: { explored: true } });
 });
+
+test('new skills reopen completed practice without discarding earned skill evidence', () => {
+  const id = 'square', exam = startPractice(id);
+  const saved = { version: 1, location: { id, page: 'quiz' }, experiments: {},
+    chapters: { square: { explored: true, passedAt: 100, reviewAt: 200,
+      practice: { ...exam, skill: 2, finished: true, variants: [1, 1, 0], independent: [0, 1, 2], practiced: [0, 1, 2] } } } };
+  const chapter = readStudy({ getItem: () => JSON.stringify(saved) }).chapters.square;
+  assert.equal(chapter.passedAt, undefined);
+  assert.equal(chapter.practice.finished, false);
+  assert.deepEqual(chapter.practice.independent, [0, 1, 2]);
+  assert.equal(chapter.practice.skill, 3);
+  assert.equal(practiceItem(id, chapter.practice).label, '解釋立方和的抵消');
+});
+
+test('an unfinished review keeps prior mastery separate from this review’s answers', () => {
+  const id = 'square', exam = startPractice(id);
+  const independent = exam.variants.map((_, i) => i);
+  const passed = recordPractice({}, { ...exam, independent, finished: true }, 100);
+  const review = startPractice(id, defaults, passed.practice);
+  assert.deepEqual(review.mastered, independent);
+  assert.deepEqual(review.independent, []);
+  const chapter = recordPractice(passed, { ...review, independent: [0] }, 150);
+  const saved = { version: 1, location: { id, page: 'quiz' }, experiments: {}, chapters: { square: chapter } };
+  const load = () => readStudy({ getItem: () => JSON.stringify(saved) }).chapters.square;
+  assert.deepEqual(load(), chapter);
+
+  const { mastered, ...oldReview } = chapter.practice;
+  saved.chapters.square = { ...chapter, practice: { ...oldReview, variants: [0, 0, 0] } };
+  const expanded = load();
+  assert.deepEqual(expanded.practice.mastered, [0, 1, 2]);
+  assert.deepEqual(expanded.practice.independent, [0, 1, 2]);
+  assert.equal(expanded.practice.skill, 3);
+  assert.equal(expanded.passedAt, undefined);
+  assert.deepEqual(expanded.previousPass, { passedAt: 100, reviewAt: 100 + day });
+  let continuing = expanded.practice;
+  while (!continuing.finished) {
+    continuing = submitPractice(id, { ...continuing, draft: String(practiceItem(id, continuing).answer) });
+    continuing = nextPractice(id, continuing);
+  }
+  assert.equal(recordPractice(expanded, continuing, 300).reviewAt, 300 + 3 * day);
+});

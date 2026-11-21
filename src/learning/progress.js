@@ -20,7 +20,32 @@ export function readStudy(storage) {
   if (!storage) return empty;
   try {
     const stored = JSON.parse(storage.getItem(storageKey));
-    if (stored?.version === 1 && stored.chapters && stored.experiments && validLocation(stored.location)) return stored;
+    if (stored?.version === 1 && stored.chapters && stored.experiments && validLocation(stored.location)) {
+      const chapters = { ...stored.chapters };
+      for (const [id, chapter] of Object.entries(chapters)) {
+        const practice = chapter.practice;
+        const count = skills[id]?.length;
+        if (!count || !practice?.variants) continue;
+        const mastered = practice.mastered ?? (chapter.passedAt ?
+          practice.variants.map((_, i) => i) : []);
+        if (practice.variants.length >= count) {
+          if (chapter.passedAt && !practice.mastered) {
+            chapters[id] = { ...chapter, practice: { ...practice, mastered } };
+          }
+          continue;
+        }
+        const { passedAt, reviewAt, ...current } = chapter;
+        const variants = Array.from({ length: count }, (_, i) => practice.variants[i] ?? 0);
+        const independent = [...new Set([...mastered, ...practice.independent])];
+        const skill = variants.findIndex((_, i) => !independent.includes(i));
+        chapters[id] = {
+          ...current,
+          ...(passedAt && { previousPass: { passedAt, reviewAt } }),
+          practice: { ...practice, ...newQuestion(), mastered, variants, independent, skill, finished: false },
+        };
+      }
+      return { ...stored, chapters };
+    }
     const legacy = JSON.parse(storage.getItem('sequence-progress') || '[]');
     if (Array.isArray(legacy)) {
       return { ...empty, chapters: Object.fromEntries(legacy.filter(id => Object.hasOwn(skills, id)).map(id => [id, { explored: true }])) };
@@ -35,6 +60,7 @@ export function startPractice(id, params = defaults, previous = null) {
   return {
     params: normalize(params), skill: 0, variants: skills[id].map((_, i) => previous ? previous.variants[i] + 1 : 0),
     independent: [], practiced: [], finished: false, ...newQuestion(),
+    ...(previous && { mastered: previous.finished ? previous.independent : previous.mastered ?? [] }),
   };
 }
 
@@ -65,8 +91,9 @@ export function nextPractice(id, practice, retry = false) {
 
 export function recordPractice(chapter, practice, now = Date.now()) {
   const justFinished = practice.finished && !chapter.practice?.finished;
+  const hasPriorPass = chapter.passedAt || chapter.previousPass?.passedAt;
   return {
-    ...chapter, explored: true, practice,
-    ...(justFinished ? { passedAt: now, reviewAt: now + (chapter.passedAt ? 3 : 1) * day } : {}),
+    ...chapter, explored: true, practice: justFinished ? { ...practice, mastered: practice.independent } : practice,
+    ...(justFinished ? { passedAt: now, reviewAt: now + (hasPriorPass ? 3 : 1) * day } : {}),
   };
 }

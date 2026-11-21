@@ -1,4 +1,5 @@
-import { calculate, defaults, normalize } from './math.js';
+import { arithmeticTerm, calculate, defaults, normalize, powerSums, recurrence } from './math.js';
+import { annuityPresentValue, amortizeLoan } from './learning/finance.js';
 
 const significantDigits = 8;
 const roundSignificant = value => Number(value.toPrecision(significantDigits));
@@ -9,12 +10,12 @@ const choice = (prompt, options, answer, steps, hints) =>
   ({ prompt, options, answer, steps, hints });
 
 export const skills = {
-  square: ['分辨單項與和', '用奇數求新增方塊', '解釋 L 形'],
+  square: ['分辨單項與和', '用奇數求新增方塊', '解釋 L 形', '解釋立方和的抵消', '選用整數和、平方和及立方和'],
   arithmetic: ['運用通項', '反求位置', '反求公差', '辨認等差', '用和建立模型', '解釋配對', '診斷步數與位置錯誤'],
-  geometric: ['運用通項', '辨認等比', '運用有限和', '解釋收斂'],
-  triangular: ['求三角形數', '反求層數', '解釋配對'],
-  fibonacci: ['使用遞推', '比較初始條件', '解釋求和'],
-  annuity: ['計算終值', '辨認現金流時點', '反求付款', '解釋零利率'],
+  geometric: ['運用通項', '辨認等比', '運用有限和', '解釋收斂', '求負公比的無窮和'],
+  triangular: ['求三角形數', '反求層數', '解釋配對', '求多個完整三角形的點數'],
+  fibonacci: ['使用遞推', '比較初始條件', '解釋求和', '求不同起點的遞推和'],
+  annuity: ['計算終值', '辨認現金流時點', '反求付款', '解釋零利率', '分辨終值、本金與利息', '折現求年金現值', '求每月供款', '辨別供款中的本金與利息'],
 };
 
 const nText = '請輸入數字；可用小數、分數或科學記數法。';
@@ -83,16 +84,30 @@ const questions = {
         [`第 k 層有 k² − (k − 1)² = 2k − 1 塊。`, `把各層相加，重複的舊面積抵消，只剩 ${n}²。`],
         ['比較單層與整塊。', '想想每一個奇數在圖上代表甚麼。']);
     },
+    (_, v) => {
+      const n = 3 + v % 7, { linear, cube } = powerSums(n);
+      return choice(`怎樣用三角數證明 1³+⋯+${n}³=${cube}？`,
+        [['把每項寫成 Tₖ²−Tₖ₋₁²，再相加抵消。'], ['把每項寫成 Tₖ−Tₖ₋₁，直接相加。', '這只留下 k，而不是 k³。'], ['把平方和再平方。', '要平方的是整數和，不是平方和。']], 0,
+        ['Tₖ−Tₖ₋₁=k，Tₖ+Tₖ₋₁=k²；相乘才得到 k³。', `抵消後是 Tₙ²=${linear}²=${cube}。`],
+        ['先拆平方差。', '想想相鄰兩個三角數的和與差。']);
+    },
+    (_, v) => {
+      const n = 3 + v % 7, { linear, square, cube } = powerSums(n);
+      return number(`每個展品都是 k×k×k 的立方體，k 從 1 到 ${n}。所有展品合共幾塊積木？`, cube,
+        [`每個展品不是一層平面；要加 1³+⋯+${n}³。`, `先算整數和 ${n}×(${n}+1)÷2=${linear}，再平方，得 ${cube}。`],
+        ['先分清每個展品的長、闊、高。', '立方和等於整數和的平方。'],
+        [[square, '這是把每個展品當成一層正方形。'], [linear, '這只是整數和，還要平方。']]);
+    },
   ],
   arithmetic: [
     (p, v) => {
       const a = v ? 3 + v % 11 : p.a, d = v ? (v % 2 ? -2 : 2.5) : p.d, n = v ? 4 + v % 8 : Math.min(p.n + 1, 13);
-      const answer = a + (n - 1) * d;
+      const answer = arithmeticTerm(a, d, n);
       return { ...number(`等差數列首項為 ${a}，公差為 ${d}。第 ${n} 項是多少？`, answer,
         [`由第 1 項到第 ${n} 項有 ${n - 1} 步。`, `aₙ = a₁ + (n − 1)d = ${a} + ${n - 1} × ${parenthesize(d)} = ${roundSignificant(answer)}（按題目精度）。`],
         ['從第 1 項起步，不是從第 0 項。', `用首項加上 ${n - 1} 次公差。`],
-        [[a + n * d, '看來可能多走了一步：由 1 到 n 只走 n−1 步。'],
-          [(n - 1) * d, '你可能只算了變化量；記得從首項出發。']], 'significant'), scenario: { a, d, n } };
+        [[arithmeticTerm(a, d, n + 1), '看來可能多走了一步：由 1 到 n 只走 n−1 步。'],
+          [arithmeticTerm(0, d, n), '你可能只算了變化量；記得從首項出發。']], 'significant'), scenario: { a, d, n } };
     },
     (_, v) => {
       const a = 3 + v % 7, d = 4, n = 7 + v % 6, target = a + (n - 1) * d;
@@ -173,6 +188,13 @@ const questions = {
         [r === -1 ? `部分和為 ${a}、0、${a}、0、⋯，並不趨向同一值。` : `雖然有正負交替，rⁿ 趨近 0，故部分和趨向 ${a} ÷ 1.5。`],
         ['看的是 S₁、S₂、… 有沒有逼近同一個數。', '判斷 |r|，而不是只看正負。']);
     },
+    (_, v) => {
+      const a = 3 * (2 + v % 8), answer = a / 1.5;
+      return number(`首項 ${a}、公比 −½ 的數列交替正負。它的無窮和是多少？`, answer,
+        ['每一項的絕對值減半；rⁿ 趨近零。', `用 a₁÷(1−r)：${a}÷[1−(−½)]=${answer}。`],
+        ['負號決定方向，絕對值決定是否縮小。', '分母要減的是負公比。'],
+        [[0, '項趨近 0，不代表部分和趨近 0。'], [2 * a, '你用的是正公比 ½；這裏要減去負公比。']]);
+    },
   ],
   triangular: [
     (_, v) => {
@@ -193,6 +215,13 @@ const questions = {
         [['大小相差一排的兩個三角形，沿對角線可拼成邊長 n 的正方形。'], ['用同樣大的兩個 Tₙ 拼成正方形。', '兩個 Tₙ 拼成 n×(n+1)，多了一列。'], ['因為把最後兩項當成全部點的總數。', '這個等式只涉及相鄰兩項，不是把所有 Tₖ 加起來。']], 0,
         [`各排互補到 ${n} 點，共 ${n} 排；代數上 Tₙ + Tₙ₋₁ = n[(n+1)+(n−1)]/2 = n²。`],
         ['比較兩份 Tₙ 和一大一小兩份的外框。', '兩個大小相差一排的點陣，恰好補出方形。']);
+    },
+    (_, v) => {
+      const n = 4 + v % 7, c = calculate('triangular', { n });
+      return number(`展覽有 1 層、2 層、⋯、${n} 層的三角點陣各一個。全場共有多少點？`, c.sum,
+        [`每個展品是完整三角形，點數分別是 ${c.values.join('、')}。`, `相加得 ${c.sum}；公式核對：${n}×(${n}+1)×(${n}+2)÷6。`],
+        ['把每個展品當作一項。', '最大的展品是最後一項，還有較小的展品。'],
+        [[c.last, '這只是最大展品的點數。']]);
     },
   ],
   fibonacci: [
@@ -216,6 +245,14 @@ const questions = {
         [['把每項寫成 Fₖ₊₂ − Fₖ₊₁ 之後相加，中間項抵消。'], ['只要把最後一項乘二。', '總和不是固定等於最後一項兩倍。'], ['把 Fₖ 都寫成 Fₖ₊₁ − Fₖ₊₂。', '差的順序顛倒，會得到 −Fₖ。']], 0,
         ['從 Fₖ₊₂ = Fₖ₊₁ + Fₖ 改寫差式。', '相加得到 Fₙ₊₂ − F₂ = Fₙ₊₂ − 1。'],
         ['用遞推式把加法改寫為兩個相鄰項的差。', '寫出前兩個差式，找重複並能抵消的項。']);
+    },
+    (_, v) => {
+      const a = 2 + v % 7, b = a + 1, n = 5 + v % 4;
+      const { values, next, sum } = recurrence(a, b, n);
+      return number(`由 ${a}、${b} 開始，此後每項是前兩項之和。前 ${n} 項相加是多少？`, sum,
+        [`前 ${n} 項為 ${values.join('、')}；向後再推兩項，第 ${n + 2} 項是 ${next}。`, `相鄰差抵消，只剩 ${next}−${b}=${sum}。`],
+        ['先用兩個起點生成各項。', '最後剩下的減數是第二項，不一定是 1。'],
+        [[next - 1, '這次第二項不是 1，不可直接套標準斐波那契數列的常數。']]);
     },
   ],
   annuity: [
@@ -251,6 +288,44 @@ const questions = {
         [[`一樣；每筆都不生息，終值都是 MOP ${n * p}。`], ['期初較大，因為時間多一年。', '時間確實較長，但 0% 不產生利息。'], ['兩種都無法計算，因為公式除以零。', '公式要分情況；零利率可直接相加本金。']], 0,
         [`i=0 時，每筆 P(1+i)ᵏ = P；n 筆相加是 ${n * p}。`],
         ['時間較長不代表一定有利息。', '想想 1+0 等於多少。']);
+    },
+    (_, v) => {
+      const payment = 100 * (5 + v % 9), total = 231 * (payment / 100);
+      const principal = 2 * payment, interest = total - principal;
+      return number(`連續兩年每年期初存 MOP ${payment}，年利率 10%。第 2 年年末賺到的利息是多少澳門元？`, interest,
+        [`兩筆分別生息兩年和一年；終值是 ${payment}×(1.1²+1.1)=${total}。`, `本金為 2×${payment}=${principal}，所以利息是 ${total}−${principal}=${interest}。`],
+        ['先把兩筆都估值到第 2 年年末。', '問利息，不是問存摺上的全部金額。'],
+        [[total, '這是兩筆合起來的終值；還要扣掉本金。'], [principal, '這是原本存入的本金，不是增加的金額。']]);
+    },
+    (_, v) => {
+      const payment = 121 * (1 + v % 7), due = v % 2 === 1;
+      const answer = Math.round(annuityPresentValue(payment, 0.10, 2, due));
+      return number(`連續兩年每年${due ? '年初' : '年末'}收到 MOP ${payment}。年折現率 10%，現值是多少澳門元？`, answer,
+        [`第一和第二筆分別在 t=${due ? '0、1' : '1、2'}；折算到 t=0 要除以相應的 1.1 次方。`,
+          `現值是兩筆折現金額的和，得 MOP ${answer}。`],
+        ['問今天值多少，不是問兩年後值多少。', '先定下兩筆款項的 t，再除以 1.1 的對應次方。'],
+        [[2 * payment, '這只加了金額，忽略其中至少一筆需要折現。'],
+          [Math.round(annuityPresentValue(payment, 0.10, 2, !due)), '你可能用了另一種收款時點；先標出 t=0 是否已收款。']], 'integer');
+    },
+    (_, v) => {
+      const principal = 20100 * (1 + v % 5), { monthlyPayment } = amortizeLoan(principal, 12, 2);
+      const answer = Math.round(monthlyPayment);
+      return number(`借款 MOP ${principal}，名義年利率 12%（按月計息），分兩個月每月底等額還清。每月供款是多少澳門元？`, answer,
+        ['月利率是 12%÷12＝1%。兩筆月底供款折算到今天是 M÷1.01 和 M÷1.01²。',
+          `兩筆現值相加等於借款本金，解得 M = ${principal}÷(1/1.01+1/1.01²) = ${answer}。`],
+        ['先把名義年利率換成月利率。', '本金等於所有供款的現值，不是直接除以期數。'],
+        [[principal / 2, '只把本金平分，等於沒有計息。'],
+          [Math.round(amortizeLoan(principal, 144, 2).monthlyPayment), '12% 是年利率；每月用 1%，不能用 12%。']], 'integer');
+    },
+    (_, v) => {
+      const principal = 20100 * (1 + v % 5), { schedule } = amortizeLoan(principal, 12, 2);
+      const { principal: repaid, interest, payment } = schedule[0];
+      return number(`借款 MOP ${principal}，名義年利率 12%（按月計息）。若第一個月底供款 MOP ${Math.round(payment)}，這一期實際歸還多少本金（澳門元）？`, Math.round(repaid),
+        [`月利率 1%；第一個月利息是 ${principal}×0.01 = ${Math.round(interest)}。`,
+          `從供款先扣利息，還本金 ${Math.round(payment)}−${Math.round(interest)} = ${Math.round(repaid)}。`],
+        ['第一期按原本金計息。', '供款分成兩部分：利息和歸還的本金。'],
+        [[Math.round(payment), '供款不是全數用來還本金；還要扣這期利息。'],
+          [Math.round(interest), '這是本期利息，不是歸還的本金。']], 'integer');
     },
   ],
 };

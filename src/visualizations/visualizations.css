@@ -123,3 +123,22 @@
   .lab-visualizations .proof-moving { transition: none; }
   .lab-visualizations * { scroll-behavior: auto !important; }
 }
+
+.sequence-picture { margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid #dbe3d4; min-width: 0; }
+.sequence-picture h4 { font-size: 18px; margin: 10px 0 16px; }
+.sequence-picture p { font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
+.picture-steps, .picture-scale { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 12px 0; }
+.picture-steps button, .picture-scale button { min-height: 44px; padding: 8px 12px; border: 1px solid #9aaf91; border-radius: 6px; background: #fff; color: #294b36; font: inherit; }
+.picture-steps button:disabled { opacity: .45; }
+.picture-scale button[aria-pressed="true"] { background: #e2ecd9; border-color: #426d4c; }
+.picture-caption { padding: 12px; background: #eef3e7; border-radius: 8px; font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
+.picture-key { font-size: 13px; color: #40573f; }
+.sequence-picture-svg { display: block; width: 360px; max-width: 100%; height: auto; margin: 18px auto; overflow: hidden; }
+.sequence-picture-svg text { font-size: 12px; }
+.area-picture { width: 300px; }
+.area-picture .picture-moving { animation: picture-appear 700ms ease both; }
+@keyframes picture-appear { from { opacity: 0; } to { opacity: 1; } }
+.picture-moving { transition: transform 850ms ease-in-out, opacity 700ms ease, x 700ms ease, y 700ms ease, width 700ms ease, height 700ms ease; }
+.picture-warning { padding: 10px; border-left: 3px solid #9c6437; }
+.lab-visualizations .picture-responsive-chart .proof-chart-svg { min-width: 0; }
+@media (prefers-reduced-motion: reduce) { .picture-moving { transition: none; } .area-picture .picture-moving { animation: none; } }

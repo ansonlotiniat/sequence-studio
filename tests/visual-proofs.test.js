@@ -1,7 +1,75 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, formatIndex, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks } from '../src/visualizations/proofModels.js';
 import { arithmeticPairTotal, arithmeticPartialSum, calculate } from '../src/math.js';
+
+test('integer indices use Unicode subscript and superscript digits', () => {
+  assert.equal(formatIndex(0), '₀');
+  assert.equal(formatIndex(1234567890), '₁₂₃₄₅₆₇₈₉₀');
+  assert.equal(formatIndex(0, 'superscript'), '⁰');
+  assert.equal(formatIndex(1234567890, 'superscript'), '¹²³⁴⁵⁶⁷⁸⁹⁰');
+  for (const value of [-1, 0.5, NaN, Infinity]) assert.throws(() => formatIndex(value), RangeError);
+});
+
+test('arithmetic pictures tile the doubled-sum rectangle for positive integers', () => {
+  for (let n = 1; n <= 12; n++) for (const [a, d] of [[2, 3], [3, 4], [20, -1], [1, 0]]) {
+    const c = calculate('arithmetic', { n, a, d });
+    const model = arithmeticPicture(c.values, a);
+    assert.equal(model.unitBlocks, true);
+    assert.equal(model.cells.length, 2 * c.sum);
+    const cells = new Set(model.cells.map(cell => `${cell.col}:${cell.row}`));
+    assert.equal(cells.size, model.cells.length);
+    for (let col = 0; col < n; col++) for (let row = 0; row < model.height; row++) assert.ok(cells.has(`${col}:${row}`));
+    for (const copy of [0, 1]) assert.equal(model.cells.filter(cell => cell.copy === copy).length, c.sum);
+  }
+});
+
+test('arithmetic zero, negative and fractional terms never masquerade as unit cells', () => {
+  for (const values of [[0], [-2, -1], [7, 5, 3, 1, -1], [0.5, 1.5]]) {
+    const model = arithmeticPicture(values, values[0]);
+    assert.equal(model.unitBlocks, false);
+    assert.deepEqual(model.cells, []);
+    assert.equal(model.positive, values.every(v => v > 0));
+  }
+});
+
+test('alternating geometric cuts partition a square with the exact remaining tail area', () => {
+  for (const ratio of [0.1, 0.5, 0.9]) for (let n = 0; n <= 12; n++) {
+    const { pieces, remaining } = geometricAreas(n, ratio);
+    const all = [...pieces, remaining];
+    assert.ok(Math.abs(remaining.width * remaining.height - ratio ** n) < 1e-12);
+    assert.ok(Math.abs(all.reduce((sum, p) => sum + p.width * p.height, 0) - 1) < 1e-12);
+    pieces.forEach((p, i) => assert.ok(Math.abs(p.width * p.height - (1 - ratio) * ratio ** i) < 1e-12));
+    for (const p of all) {
+      assert.ok(p.x >= 0 && p.y >= 0 && p.x + p.width <= 1 + 1e-12 && p.y + p.height <= 1 + 1e-12);
+      for (const q of all) if (p !== q) assert.ok(Math.min(p.x + p.width, q.x + q.width) - Math.max(p.x, q.x) < 1e-12 || Math.min(p.y + p.height, q.y + q.height) - Math.max(p.y, q.y) < 1e-12);
+    }
+  }
+  for (const ratio of [-1, 0, 1, 2]) assert.deepEqual(geometricAreas(3, ratio), { pieces: [], remaining: null });
+});
+
+test('shift pictures cancel only matching middle terms, including exceptional ratios', () => {
+  for (const r of [-3, -0.5, 0, 0.5, 1, 3]) for (let n = 1; n <= 12; n++) {
+    const c = calculate('geometric', { n, a: 2, r });
+    const blocks = cancellationBlocks(c.values, r);
+    assert.equal(blocks.filter(b => !b.cancels).length, 2);
+    for (let col = 1; col < n; col++) {
+      const pair = blocks.filter(b => b.col === col);
+      assert.equal(pair.length, 2);
+      assert.ok(Math.abs(pair[0].value - pair[1].value) < 1e-8);
+      assert.ok(pair.every(b => b.cancels));
+    }
+  }
+});
+
+test('log distances preserve zero, sign and equal spacing for multiplicative magnitudes', () => {
+  for (const values of [[0, 0], [0.0001, -0.01, 1, -100], [2, 4, 8, 16]]) {
+    const scale = signedLogScale(values);
+    values.forEach(v => { assert.equal(Math.sign(scale.map(v)), Math.sign(v)); assert.ok(Number.isFinite(scale.map(v))); });
+  }
+  const scale = signedLogScale([2, 4, 8]);
+  assert.ok(Math.abs((scale.map(8) - scale.map(4)) - (scale.map(4) - scale.map(2))) < 1e-12);
+});
 
 test('square decomposition conserves area and counts its corner only once, including n=1', () => {
   for (let n = 1; n <= 12; n++) {

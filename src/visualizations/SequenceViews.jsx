@@ -1,6 +1,7 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { arithmeticPartialSum, calculate } from '../math.js';
-import { chartDomain, geometricTail, visualFormat as f } from './proofModels.js';
+import { chartDomain, geometricTail, signedLogScale, visualFormat as f } from './proofModels.js';
+import { ScaleToggle } from './SequencePictures.jsx';
 import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 
 export function ShapeView({ id, c, proof, setProof, selected, setSelected }) {
@@ -13,35 +14,49 @@ export function ShapeView({ id, c, proof, setProof, selected, setSelected }) {
   return <AnnuityProof {...props}/>;
 }
 
-export function SequenceChart({ values, selected, setSelected, cumulative = false, annuityYear = null, domainValues = values, limit = null }) {
+export function SequenceChart({ values, selected, setSelected, cumulative = false, annuityYear = null, domainValues = values, limit = null, allowLog = false }) {
   const [fixed, setFixed] = useState(false);
   const [connect, setConnect] = useState(false);
+  const [log, setLog] = useState(false);
+  const chartRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(700);
+  useEffect(() => {
+    if (!allowLog || !chartRef.current) return;
+    const observer = new ResizeObserver(([entry]) => setChartWidth(Math.max(260, entry.contentRect.width)));
+    observer.observe(chartRef.current);
+    return () => observer.disconnect();
+  }, [allowLog]);
   const titleId = useId();
   const valid = Number.isInteger(selected) && selected >= 0 && selected < values.length ? selected : null;
-  const [min, max] = chartDomain([...(fixed ? domainValues : values), ...(limit === null ? [] : [limit])]);
-  const left = 92, right = 650, top = 35, bottom = 250;
-  const y = v => bottom - (v - min) / (max - min) * (bottom - top);
+  const reference = [...(fixed ? domainValues : values), ...(limit === null ? [] : [limit])];
+  const logarithm = signedLogScale(reference);
+  const transform = allowLog && log ? logarithm.map : v => v;
+  const [min, max] = chartDomain(reference.map(transform));
+  const left = allowLog ? 58 : 92, right = allowLog ? chartWidth - 28 : 650, top = 35, bottom = 250;
+  const axisY = v => bottom - (v - min) / (max - min) * (bottom - top);
+  const y = v => axisY(transform(v));
   const x = i => values.length === 1 ? (left + right) / 2 : left + i * (right - left) / (values.length - 1);
   const unit = annuityYear === null ? '項' : '筆';
   const title = annuityYear !== null ? `第 ${annuityYear} 年年末的${cumulative ? '存款終值小計' : '各筆存款終值'}` : cumulative ? '部分和 Sₖ' : '單項 aₖ';
   return <div className="proof-chart">
+    {allowLog && <><ScaleToggle {...{ log, setLog }}/>{log && <p className="picture-caption">縱軸為帶符號的對數距離：正值向上、負值向下；距離 = log₁₀|aₖ| {logarithm.origin < 0 ? '+' : '−'} {Math.abs(logarithm.origin)} + 1。零值在軸上；刻度顯示距離，不是原數值，精確值見下表。</p>}</>}
     <div className="proof-chart-options"><label><input type="checkbox" checked={fixed} onChange={e => setFixed(e.target.checked)}/>固定為 12 {unit}的縱軸比例</label><label><input type="checkbox" checked={connect} onChange={e => setConnect(e.target.checked)}/>連線輔助觀察</label></div>
     <p className="proof-scale-note">{fixed ? annuityYear !== null ? '縱軸參照同參數的 12 年模型；資料仍在本次終點估值。' : '縱軸按相同參數的 12 項固定，方便逐項比較。' : '縱軸依目前數值自動調整；高度只在本圖內比較。'}數列只定義整數位置，連線不代表中間另有項。</p>
-    <div className="proof-scroll" tabIndex="0" role="region" aria-label="可左右捲動的數列圖表">
-      <svg className="proof-chart-svg" viewBox="0 0 700 300" role="group" aria-labelledby={titleId}>
+    <div ref={chartRef} className={`proof-scroll ${allowLog ? 'picture-responsive-chart' : ''}`} tabIndex="0" role="region" aria-label={allowLog ? '隨寬度調整的數列圖表' : '可左右捲動的數列圖表'}>
+      <svg className="proof-chart-svg" viewBox={`0 0 ${allowLog ? chartWidth : 700} 300`} role="group" aria-labelledby={titleId}>
         <title id={titleId}>{title}；橫軸為{annuityYear === null ? '項數 k' : '存款順序 k'}</title>
-        <text x="12" y="18" className="proof-svg-label">{annuityYear !== null ? 'FV ($)' : cumulative ? 'Sₖ' : 'aₖ'}</text>
-        {Array.from({ length: 5 }, (_, i) => { const v = min + i * (max - min) / 4; return <g key={i}><line x1={left} x2={right} y1={y(v)} y2={y(v)} className="proof-gridline"/><text x={left - 10} y={y(v) + 4} textAnchor="end" className="proof-svg-label">{f(v)}</text></g>; })}
+        <text x="12" y="18" className="proof-svg-label">{allowLog && log ? '對數距離' : annuityYear !== null ? 'FV ($)' : cumulative ? 'Sₖ' : 'aₖ'}</text>
+        {Array.from({ length: 5 }, (_, i) => { const v = min + i * (max - min) / 4; return <g key={i}><line x1={left} x2={right} y1={axisY(v)} y2={axisY(v)} className="proof-gridline"/><text x={left - 10} y={axisY(v) + 4} textAnchor="end" className="proof-svg-label">{allowLog && log ? Number(v.toPrecision(3)).toLocaleString('zh-Hant') : f(v)}</text></g>; })}
         <line x1={left} x2={right} y1={y(0)} y2={y(0)} className="proof-zero-line"/>
         {limit !== null && <g><line x1={left} x2={right} y1={y(limit)} y2={y(limit)} className="proof-limit-line"/><text x={right} y={y(limit) - 10} textAnchor="end" className="proof-svg-label">極限 S∞ = {f(limit)}</text></g>}
         {connect && values.length > 1 && <polyline points={values.map((v, i) => `${x(i)},${y(v)}`).join(' ')} className="proof-chart-line"/>}
         {values.map((v, i) => <g key={i} className="proof-chart-point" role="button" tabIndex="0" aria-pressed={valid === i} aria-label={`第 ${i + 1} ${unit}${cumulative ? '累計' : ''}：${f(v)}`} onClick={() => setSelected(i)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(i); } }}>
           <rect x={x(i) - 22} y={y(v) - 22} width="44" height="44" fill="transparent"/>
-          <circle cx={x(i)} cy={y(v)} r={valid === i ? 7 : 5} className={valid === i ? 'proof-chart-selected' : 'proof-chart-dot'}/>
+          <circle cx={x(i)} cy={y(v)} r={valid === i ? 7 : 5} className={valid === i ? 'proof-chart-selected' : 'proof-chart-dot'} style={allowLog && v < 0 ? { fill: '#b66450' } : undefined}/>
           <text x={x(i)} y={bottom + 25} textAnchor="middle" className="proof-svg-label">{i + 1}</text>
           {i === valid && <text x={x(i)} y={y(v) - 14} textAnchor="middle" className="proof-chart-value">{f(v)}</text>}
         </g>)}
-        <text x="678" y={bottom + 25} className="proof-svg-label">k</text>
+        <text x={allowLog ? chartWidth - 12 : 678} y={bottom + 25} className="proof-svg-label">k</text>
       </svg>
     </div>
     <p className="proof-chart-detail" role="status">{valid === null ? '點選圖點，或在下方數值表選擇一項。' : `第 ${valid + 1} ${unit}${cumulative ? '累計' : ''}：${f(values[valid])}`}</p>

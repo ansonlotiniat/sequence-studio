@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Download, Grid2X2, Layers, Lightbulb, LineChart, Minus, Pause, Play, Plus, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { arithmeticPartialSum, calculate, defaults, normalize } from '../math.js';
 import { proofCalculation, proofFormat, visualFormat as f } from './proofModels.js';
@@ -9,6 +9,7 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
   const { id } = lesson, p = c.params;
   const display = proofCalculation(id, c), displayFormat = id === 'arithmetic' || id === 'geometric' ? proofFormat : f;
   const [playing, setPlaying] = useState(false);
+  const workspaceRef = useRef(null), controlsRef = useRef(null);
   const [speed, setSpeed] = useState(1600);
   const [repeat, setRepeat] = useState(false);
   const [rawSelected, setSelected] = useState(null);
@@ -27,6 +28,14 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
   }, [playing, p.n, speed, repeat, setParams]);
   useEffect(() => { setSelected(null); }, [p.n]);
   useEffect(() => { onSelectionChange?.(focused === null ? null : focused + 1); }, [focused, onSelectionChange]);
+  useEffect(() => {
+    // Reserve the real control height, including wrapped labels and loaded fonts.
+    const observer = new ResizeObserver(() => {
+      workspaceRef.current?.style.setProperty('--experiment-controls-height', `${controlsRef.current.getBoundingClientRect().height}px`);
+    });
+    observer.observe(controlsRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   function changeView(next) {
     if (next === view) return;
@@ -44,8 +53,8 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
     const url = URL.createObjectURL(new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' }));
     const a = document.createElement('a'); a.href = url; a.download = `${id}-n${p.n}.csv`; a.click(); URL.revokeObjectURL(url);
   }
-  return <div className="lab-layout lab-visualizations">
-    <aside className="controls-panel" onFocusCapture={() => setPlaying(false)}>
+  return <div ref={workspaceRef} className="lab-layout lab-visualizations">
+    <aside ref={controlsRef} className="controls-panel" onFocusCapture={() => setPlaying(false)}>
       <div className="control-heading"><span>你的實驗，自己決定</span><span className="control-tag">即時更新</span></div><p>一次改一個數字，再用圖形解釋原因。</p>
       <div className="term-control"><label htmlFor="n-range">{id === 'annuity' ? '存款期數' : '觀察項數'} <span>n</span></label><div className="stepper"><button aria-label="減少一項" disabled={p.n === 1} onClick={() => update('n', p.n - 1)}><Minus size={16}/></button><input aria-label="項數" type="number" min="1" max="12" value={p.n} onChange={e => update('n', e.target.value)}/><button aria-label="增加一項" disabled={p.n === 12} onClick={() => update('n', p.n + 1)}><Plus size={16}/></button></div></div>
       <input id="n-range" aria-label="觀察項數滑桿" className="range" type="range" min="1" max="12" value={p.n} onChange={e => update('n', e.target.value)}/><div className="range-labels"><span>1 {id === 'annuity' ? '年' : '項'}</span><span>12 {id === 'annuity' ? '年' : '項'}</span></div>

@@ -85,3 +85,15 @@ test('proof display rounding cannot lose the original precision when choosing a 
     assert.equal(relation(exactArithmeticSum(proof.sourceParams), proofFormat(proof.sum)), '≈');
   }
 });
+
+test('arithmetic inverse substitutions compare displayed operands to the original position', () => {
+  assert.match(worked('arithmetic', { a: 0.123456789012, d: 0.2, n: 5, target: 31 })[3], /位置 ≈ 1 \+ /);
+  assert.match(worked('arithmetic', { a: 0.1, d: 0.2, n: 5, target: 0.9 })[3], /位置 = 1 \+ /);
+  const proof = proofCalculation('arithmetic', calculate('arithmetic', { a: 1, d: -1.9999999999999998, n: 2 }));
+  assert.equal(relation(exact(proof.sourceParams.d), proofFormat(proof.params.d)), '≈');
+});
+
+test('zero-rate annuity keeps its final equality only when the principal display is exact', () => {
+  assert.match(worked('annuity', { payment: 1000, rate: 0, n: 3 })[4], /終值＝3×1000＝MOP 3000/);
+  assert.match(worked('annuity', { payment: 0.123456789012, rate: 0, n: 5 })[6], /終值＝5×0\.123456789012≈MOP 0\.6172839451/);
+});

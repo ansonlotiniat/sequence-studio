@@ -11,7 +11,9 @@ function arithmeticPosition(a, d, target) {
   const position = 1 + (target - a) / d;
   const candidate = Math.round(position);
   const valid = Number.isSafeInteger(candidate) && candidate >= 1 && arithmeticTerm(a, d, candidate) === target;
-  return `反推：位置 = 1 + (${display(target)}−${group(a)})÷${group(d)}；${valid ?
+  const exactPosition = exact(1).plus(exact(target).minus(exact(a)).dividedBy(exact(d)));
+  const shownPosition = exact(1).plus(exact(display(target)).minus(exact(display(a))).dividedBy(exact(display(d))));
+  return `反推：位置 ${relation(exactPosition, shownPosition)} 1 + (${display(target)}−${group(a)})÷${group(d)}；${valid ?
     `代回驗證，${display(target)} 是第 ${candidate} 項。` :
     `估算位置為 ${display(position)}，沒有可驗證的正整數位置（只檢查安全整數範圍）；不可直接把位置四捨五入。`}`;
 }
@@ -94,7 +96,7 @@ export function workedComputation(id, input) {
           const shownDeposit = exact(payment).times(exact(display(1 + rate / 100)).power(n - t));
           return `第 ${i + 1} 筆在 t=${t} 存入，生息 ${n}−${t}=${n - t} 年：MOP ${payment}×${group(1 + rate / 100)}${superscript(n - t)} ${relation(deposit, display(value), shownDeposit)} MOP ${display(value)}。`;
         }),
-        rate === 0 ? `零利率：終值＝${n}×${payment}＝MOP ${display(c.principal)}，利息為零。` :
+        rate === 0 ? `零利率：終值＝${n}×${payment}${relation(total, display(c.principal)) === '=' ? '＝' : '≈'}MOP ${display(c.principal)}，利息為零。` :
           `用等比和核對：[(1+${display(rate / 100)})${superscript(n)}−1]÷${display(rate / 100)}${due ? `，期初再乘 (1+${display(rate / 100)})` : ''}，得到每 MOP 1 的終值係數 ${relation(exactFactor, display(factor), shownFactor)} ${display(factor)}。總終值 ${relation(total, display(c.sum))} MOP ${display(c.sum)}；減去本金 MOP ${display(c.principal)}，利息 ${relation(interest, display(c.sum - c.principal))} MOP ${display(c.sum - c.principal)}。`,
         `反向：若以 MOP ${input.target} 為目標，所需每筆存款＝目標÷終值係數 ${relation(exact(input.target)?.dividedBy(exactFactor), display(input.target / factor))} MOP ${display(input.target / factor)}（計算時不先四捨五入係數）。`,
       ];

@@ -31,7 +31,7 @@ test('Chinese questions survive a UTF-8 character split between HTTP chunks', as
   let received;
   global.fetch=async(_,options)=>{
     received=JSON.parse(options.body).contents.at(-1).parts[0].text;
-    return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({reply:'看看新增的積木。'})}]}}]})};
+    return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({reply:'看看新增的積木。',squareHintTerm:'none'})}]}}]})};
   };
   const question='為甚麼平方數的差是奇數？';
   const body=Buffer.from(JSON.stringify({lesson:'square',messages:[{role:'user',text:question}]}));

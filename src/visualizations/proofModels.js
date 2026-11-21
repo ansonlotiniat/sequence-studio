@@ -29,6 +29,12 @@ export function shiftedTerms(values, ratio) {
   }));
 }
 
+// Evaluate the tail itself: subtracting nearly equal floating-point sums loses it.
+export function geometricTail(a, r, k) {
+  if (a === 0) return 0;
+  return Math.abs(r) < 1 ? a * r ** k / (1 - r) : null;
+}
+
 export function visualFormat(value) {
   if (value === 0) return '0';
   if (Math.abs(value) < 0.001 || Math.abs(value) >= 1e7) return value.toExponential(3);

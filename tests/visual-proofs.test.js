@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
 import { calculate } from '../src/math.js';
 
 test('square decomposition conserves area and counts its corner only once, including n=1', () => {
@@ -49,4 +49,18 @@ test('nonzero small values never display as exact zero; charts include zero with
     assert.ok(min < 0 && max > 0);
     assert.ok(values.every(v => v > min && v < max));
   }
+});
+
+test('geometric tail preserves small nonzero remainders and their alternating signs', () => {
+  assert.ok(Math.abs(geometricTail(2, 0.01, 12) / (2e-24 / 0.99) - 1) < 1e-14);
+  for (const r of [0.01, 0.1, -0.1, -0.5]) for (const k of [1, 2, 12]) {
+    const tail = geometricTail(2, r, k);
+    const next = 2 * r ** k;
+    assert.equal(Math.sign(tail), Math.sign(next));
+    assert.ok(Math.abs((tail - geometricTail(2, r, k + 1)) / next - 1) < 1e-14);
+    assert.notEqual(visualFormat(tail), '0');
+  }
+  assert.equal(geometricTail(0, 3, 12), 0);
+  assert.equal(geometricTail(2, 0, 12), 0);
+  assert.equal(geometricTail(2, 1, 12), null);
 });

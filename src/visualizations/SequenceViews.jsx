@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import { calculate } from '../math.js';
-import { chartDomain, visualFormat as f } from './proofModels.js';
+import { chartDomain, geometricTail, visualFormat as f } from './proofModels.js';
 import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 
 export function ShapeView({ id, c, proof, setProof, selected, setSelected }) {
@@ -74,7 +74,7 @@ export function SumView({ id, c, selected, setSelected }) {
     <SequenceChart values={sums} selected={selected} setSelected={setSelected} cumulative annuityYear={id === 'annuity' ? c.params.n : null}
       domainValues={domainValues} limit={limit}/>
     <div className="proof-equation">{id === 'annuity' ? `t=${c.params.n} 的 ${k} 筆存款終值小計` : `S${k}`} = {f(sums[k - 1])}</div>
-    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : `極限 S∞ = ${f(limit)}；目前還差 S∞ − S${k} = ${f(limit - sums[k - 1])}。虛線是極限，不是第 13 項。`}</p>}
+    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : `極限 S∞ = ${f(limit)}；尾和 S∞ − S${k} = a₁r^${k}/(1−r) = ${f(geometricTail(c.params.a, c.params.r, k))}。虛線是極限，不是第 13 項。`}</p>}
     {id === 'fibonacci' && <div className="proof-fib-sum"><h4>把遞推式改寫成相鄰兩項的差</h4><div className="proof-scroll" tabIndex="0" role="region" aria-label="斐波那契求和抵消證明"><div className="proof-telescope">{c.values.slice(0, k).map((v, i) => <span key={i}>{i > 0 ? ' + ' : ''}(<b className={i < k - 1 ? 'proof-cancel' : ''}>F{i + 3}</b> − <b className={i > 0 ? 'proof-cancel' : ''}>F{i + 2}</b>)</span>)}</div></div><p>中間的正負項相消，只剩 F{k + 2} − F₂ = {extendedFib[k + 1]} − 1 = {f(sums[k - 1])}。</p></div>}
   </div>;
 }

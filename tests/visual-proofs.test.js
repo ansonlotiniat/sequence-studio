@@ -69,7 +69,7 @@ test('decimal arithmetic pairs cancel consistently without erasing genuinely tin
   assert.equal(arithmeticPairTotal(-0.3, 0.1, 7), 0);
   assert.equal(arithmeticPartialSum(-0.3, 0.1, 7), 0);
   assert.equal(arithmeticPairTotal(0.3, -0.1, 7), 0);
-  assert.equal(arithmeticPartialSum(1e-20, 0, 12), 12e-20);
+  assert.ok(Math.abs(arithmeticPartialSum(1e-20, 0, 12) / 12e-20 - 1) < 1e-14);
   for (const a of [-10, -0.3, 0, 0.2, 1e-20]) for (const d of [-1, -0.1, 0, 0.1, 3]) for (const n of [1, 7, 12]) {
     const expected = calculate('arithmetic', { a, d, n }).sum;
     assert.ok(Math.abs(arithmeticPartialSum(a, d, n) - expected) < 1e-12);

@@ -15,9 +15,16 @@ export function useMedia(query) {
 // Only modal surfaces trap focus. A docked desktop tutor stays usable alongside
 // the experiment, while still supporting Escape and returning to its opener.
 export function useOverlay(ref, open, modal, onClose) {
+  // Resizing changes modality, not the original trigger. Keep restoration tied
+  // to the open lifetime so an inert opener cannot be replaced by BODY.
   useEffect(() => {
     if (!open) return;
     const opener = document.activeElement;
+    return () => { if (opener?.isConnected) opener.focus({ preventScroll: true }); };
+  }, [open, ref]);
+
+  useEffect(() => {
+    if (!open) return;
     const node = ref.current;
     const focusable = () => [...node.querySelectorAll('a[href],button,input,textarea,select,[tabindex="0"]')]
       .filter(element => !element.disabled && element.getClientRects().length);
@@ -42,7 +49,6 @@ export function useOverlay(ref, open, modal, onClose) {
       cancelAnimationFrame(frame);
       document.removeEventListener('keydown', keydown);
       if (modal) document.body.style.overflow = previousOverflow;
-      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, [open, modal, onClose, ref]);
 }

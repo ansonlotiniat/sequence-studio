@@ -16,8 +16,8 @@ return http.createServer(async (req,res) => {
   catch { res.statusCode=400;res.end('Invalid URL');return; }
   if(path === '/api/health') return health(req,res);
   if(path === '/api/tutor') {
-    let size=0,body='';
-    try { for await(const chunk of req) { size+=chunk.length;if(size>20000){res.statusCode=413;res.end(JSON.stringify({error:'請求太長。'}));return;}body+=chunk; } req.body=body;return await tutor(req,res); }
+    let size=0;const chunks=[];
+    try { for await(const chunk of req) { size+=chunk.length;if(size>20000){res.statusCode=413;res.end(JSON.stringify({error:'請求太長。'}));return;}chunks.push(chunk); } req.body=Buffer.concat(chunks).toString('utf8');return await tutor(req,res); }
     catch {res.statusCode=400;res.end(JSON.stringify({error:'無效的請求。'}));return;}
   }
   if(!['GET','HEAD'].includes(req.method)){res.statusCode=405;res.end();return;}

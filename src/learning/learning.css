@@ -1,3 +1,4 @@
+.section-tabs { flex-direction: row; }
 .guided-lesson { display: grid; gap: 18px; }
 .lesson-card {
   min-width: 0;

@@ -48,6 +48,15 @@ test('explicit grading distinguishes nonzero, integer, and input format', () => 
   }
 });
 
+test('arithmetic diagnoses both an extra step and a noninteger position', () => {
+  const item = makeItem('arithmetic', skills.arithmetic.indexOf('診斷步數與位置錯誤'), 0);
+  assert.match(item.options[item.answer][0], /第 6 項是 -6.*5 步.*-7.*不在數列中/);
+  const extraStep = item.options.findIndex(([text]) => text.includes('位置就是步數'));
+  const rounding = item.options.findIndex(([text]) => text.includes('取最接近的整數'));
+  assert.match(grade(item, String(extraStep)).feedback, /還沒有走任何一步/);
+  assert.match(grade(item, String(rounding)).feedback, /只有正整數位置/);
+});
+
 test('each skill supplies distinct transfer prompts and diagnoses wrong choices', () => {
   for (const [id, labels] of Object.entries(skills)) for (const skill of labels.keys()) {
     const first = makeItem(id, skill, 0);

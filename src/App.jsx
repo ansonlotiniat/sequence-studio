@@ -25,6 +25,7 @@ function initialStudy() {
 export default function App() {
   const [study, setStudy] = useState(initialStudy);
   const [chatOpen, setChatOpen] = useState(false);
+  const closeTutor = useCallback(() => setChatOpen(false), []);
   const [view, setView] = useState('shape');
   const [proof, setProof] = useState(false);
   const [experimentRun, setExperimentRun] = useState(0);
@@ -83,7 +84,6 @@ export default function App() {
 
   function applyAction(action) {
     const target = action.lesson || id;
-    if (action.lesson) navigate('lab', target);
     if (action.params) setStudy(current => ({
       ...current,
       experiments: {
@@ -91,6 +91,10 @@ export default function App() {
         [target]: normalize({ ...(current.experiments[target] ?? defaults), ...action.params }),
       },
     }));
+    // Applying a suggestion should reveal the changed experiment, not leave it
+    // underneath a mobile conversation. Navigation also restores heading focus.
+    navigate('lab', target);
+    if (!window.matchMedia('(min-width: 1280px)').matches) setChatOpen(false);
   }
 
   function changePractice(practice) {
@@ -102,7 +106,7 @@ export default function App() {
 
   const lab = <Lab key={`${id}:${experimentRun}`} lesson={lesson} c={c} setParams={setParams} view={view} setView={setView} proof={proof} setProof={setProof} />;
 
-  return <Layout {...{ study, lesson, navigate }} openTutor={() => setChatOpen(true)}
+  return <Layout {...{ study, lesson, navigate, chatOpen, closeTutor }} openTutor={() => setChatOpen(true)}
     tutor={<Tutor chatOpen={chatOpen} setChatOpen={setChatOpen} lesson={lesson} params={c.params} onApplyAction={applyAction} />}>
     {page === 'path' ? <LearningPath study={study} navigate={navigate} /> : page === 'quiz' ?
       <Practice id={id} practice={chapter.practice} onChange={changePractice} reviewAt={chapter.reviewAt}

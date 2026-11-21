@@ -21,7 +21,7 @@ export default function Tutor({ chatOpen, setChatOpen, lesson, context, practice
   const { page, params } = context;
   const scope = page === 'path' ? 'path' : id;
   const signature = page === 'quiz' ? JSON.stringify([id, page, practiceCoach?.signature]) : contextKey(id, context);
-  const label = snapshotLabel(context);
+  const label = snapshotLabel(id, context);
   const [threads, setThreads] = useState({});
   const [drafts, setDrafts] = useState({});
   const [modeChoice, setModeChoice] = useState(null);

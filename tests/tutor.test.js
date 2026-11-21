@@ -49,6 +49,9 @@ test('experimental facts handle special geometric ratios and zero interest', () 
   assert.equal(beginning.interest, 0);
   assert.deepEqual(end.periods, [3, 2, 1, 0]);
   assert.deepEqual(beginning.periods, [4, 3, 2, 1]);
+  const { selected } = facts('annuity', { payment: 100, rate: 10, n: 4 });
+  assert.equal(selected.term, 3);
+  assert.ok(Math.abs(selected.sum - 364.1) < 1e-9);
 });
 test('unopened lesson experiment supplies no visual facts or action schema', () => {
   const learn = { ...input, context: { page: 'learn' } };

@@ -36,11 +36,11 @@ export function parameterValue(key, value) {
   return String(value).replace('-', '−');
 }
 
-export function snapshotLabel(context) {
+export function snapshotLabel(lesson, context) {
   if (!context.params) return pageNames[context.page];
   return [viewNames[context.view], ...Object.entries(context.params).map(([key, value]) =>
     `${parameterNames[key]} ${parameterValue(key, value)}`), ...(context.proof ? ['已拼合點陣'] : []),
-    ...(context.selected ? [`選中第 ${context.selected} 項`] : [])].join(' · ');
+    ...(context.selected ? [`選中第 ${context.selected} ${lesson === 'annuity' ? '筆存款' : '項'}`] : [])].join(' · ');
 }
 
 export function experimentAction(raw, lesson, params) {
@@ -77,7 +77,14 @@ export function calculatedFacts(lesson, context) {
 
 export function factLabel(lesson, context, facts) {
   const n = context.params.n;
-  if (lesson === 'annuity') return `本金 $${format(facts.principal)} · 利息 $${format(facts.interest)} · 終值 $${format(facts.sum)}`;
+  if (lesson === 'annuity') {
+    const total = `本金 $${format(facts.principal)} · 利息 $${format(facts.interest)} · 終值 $${format(facts.sum)}`;
+    if (!facts.selected) return total;
+    const { term, value, sum } = facts.selected;
+    const selected = context.view === 'sum' ? `前 ${term} 筆終值小計 $${format(sum)}` :
+      `第 ${term} 筆終值 $${format(value)}（計息 ${facts.periods[term - 1]} 期）`;
+    return `${selected} · 全部：${total}`;
+  }
   if (facts.selected) {
     const { term, value, sum } = facts.selected;
     return context.view === 'sum' ? `前 ${term} 項和：${format(sum)}` : `第 ${term} 項：${format(value)}`;

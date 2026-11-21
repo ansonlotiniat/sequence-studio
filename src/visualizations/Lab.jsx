@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Grid2X2, Layers, Lightbulb, LineChart, Minus, Pause, Play, Plus, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { calculate, defaults, normalize } from '../math.js';
-import { visualFormat as f } from './proofModels.js';
+import { arithmeticPartialSum, visualFormat as f } from './proofModels.js';
 import { ShapeView, SequenceChart, SumView } from './SequenceViews.jsx';
 import './visualizations.css';
 
@@ -16,6 +16,7 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
   const focused = view === 'graph' ? selected : view === 'sum' ? selected ?? p.n - 1 : ['triangular', 'geometric'].includes(id) ? null : selected ?? (id === 'annuity' ? 0 : p.n - 1);
   const update = (key, value) => { setPlaying(false); setParams(v => normalize({ ...v, [key]: value })); setSelected(null); setAnnouncement(''); };
   const choose = index => { setPlaying(false); setSelected(index); };
+  const sum = id === 'arithmetic' ? arithmeticPartialSum(p.a, p.d, p.n) : c.sum;
 
   useEffect(() => {
     if (!playing) return;
@@ -61,7 +62,7 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
       {(id === 'arithmetic' || id === 'geometric') && <div className="extra-controls"><NumberControl label="首項 a₁" value={p.a} min={-20} max={20} step={1} onChange={v => update('a', v)}/><NumberControl label={id === 'arithmetic' ? '公差 d' : '公比 r'} value={id === 'arithmetic' ? p.d : p.r} min={id === 'arithmetic' ? -10 : -3} max={id === 'arithmetic' ? 10 : 3} step={0.5} onChange={v => update(id === 'arithmetic' ? 'd' : 'r', v)}/></div>}
       {id === 'annuity' && <div className="extra-controls"><NumberControl label="每年存入 P ($)" value={p.payment} min={0} max={100000} step={100} onChange={v => update('payment', v)}/><NumberControl label="年利率 i (%)" value={p.rate} min={0} max={30} step={0.5} onChange={v => update('rate', v)}/><label className="checkbox-label"><input type="checkbox" checked={p.due} onChange={e => update('due', e.target.checked)}/>每年期初存入</label></div>}
       <div className="stat-box"><span>{id === 'annuity' ? '共同終點總值 FV' : `第 ${p.n} 項`}{id !== 'annuity' && <i>a<sub>{p.n}</sub></i>}</span><strong>{id === 'annuity' ? '$' : ''}{f(id === 'annuity' ? c.sum : c.last)}</strong><small>{id === 'square' ? `${p.n} × ${p.n} = ${c.last} 個單位方塊` : id === 'triangular' ? `第 ${p.n} 個三角形有 ${c.last} 點` : id === 'annuity' ? `本金 $${f(c.principal)} · 利息 $${f(c.sum - c.principal)}` : lesson.formula}</small></div>
-      <div className="sum-stat"><span>{id === 'annuity' ? '利息佔總值' : `前 ${p.n} 項的和`} <i>{id === 'annuity' ? '' : 'Sₙ'}</i></span><strong>{id === 'annuity' ? `${c.sum === 0 ? 0 : f((c.sum - c.principal) / c.sum * 100)}%` : f(c.sum)}</strong></div>
+      <div className="sum-stat"><span>{id === 'annuity' ? '利息佔總值' : `前 ${p.n} 項的和`} <i>{id === 'annuity' ? '' : 'Sₙ'}</i></span><strong>{id === 'annuity' ? `${c.sum === 0 ? 0 : f((c.sum - c.principal) / c.sum * 100)}%` : f(sum)}</strong></div>
       <div className="observe-note"><Lightbulb size={18}/><div><strong>觀察後，試著解釋</strong><p>{id === 'square' ? '指出角落只數一次，說出 L 形為甚麼有 2n−1 格。' : id === 'triangular' ? '不用重新逐點數，說明每行為甚麼一樣長、何時要除以 2。' : id === 'arithmetic' ? '若公差為負，倒寫配對為甚麼仍然有相同的和？' : id === 'geometric' ? '指出相減時留下的首尾兩項，並解釋 r=1 時不能做哪一步。' : id === 'fibonacci' ? '指出兩個來源的下標，再說明為甚麼不是上一項乘二。' : '指出最後一筆存款的時間，再說明期初比期末多生息多久。'}</p></div></div>
     </aside>
   </div>;

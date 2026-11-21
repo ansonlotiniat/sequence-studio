@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { squareTiles, triangleCopies, shiftedTerms, visualFormat as f } from './proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, arithmeticPairTotal, arithmeticPartialSum, visualFormat as f } from './proofModels.js';
 
 export function Legend({ items }) {
   return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{text}</li>)}</ul>;
@@ -62,6 +62,8 @@ export function TriangleProof({ c, proof, setProof }) {
 export function ArithmeticProof({ c, selected, setSelected }) {
   const [paired, setPaired] = useState(false);
   const { values, params: p } = c, k = selected ?? p.n - 1;
+  const pairTotal = arithmeticPairTotal(p.a, p.d, p.n);
+  const sum = arithmeticPartialSum(p.a, p.d, p.n);
   return <div className="proof-scene" data-proof="arithmetic">
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected}/>
@@ -70,10 +72,10 @@ export function ArithmeticProof({ c, selected, setSelected }) {
     <div className="proof-scroll" tabIndex="0" role="region" aria-label="正寫與倒寫配對表"><table className="proof-table"><thead><tr><th scope="col">位置</th>{values.map((_, i) => <th scope="col" key={i}>{i + 1}</th>)}</tr></thead><tbody>
       <tr><th scope="row">正寫 Sₙ</th>{values.map((v, i) => <td key={i} className={i === k ? 'source-a' : ''}>{f(v)}</td>)}</tr>
       <tr><th scope="row">倒寫 Sₙ</th>{values.map((_, i) => <td key={i} className={i === k ? 'source-b' : ''}>{f(values[p.n - i - 1])}</td>)}</tr>
-      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((v, i) => <td key={i}>{f(v + values[p.n - i - 1])}</td>)}</tr>}
+      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((_, i) => <td key={i}>{f(pairTotal)}</td>)}</tr>}
     </tbody></table></div>
     <Legend items={[[ 'base', '正寫的一份總和' ], [ 'copy', '倒寫的另一份總和' ]]}/>
-    <Equation>{paired ? `2S${p.n} = ${p.n} × (${f(values[0])} + ${f(c.last)}) = ${f(2 * c.sum)}；S${p.n} = ${f(c.sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
+    <Equation>{paired ? `2S${p.n} = ${p.n} × (${f(values[0])} + ${f(c.last)}) = ${f(2 * sum)}；S${p.n} = ${f(sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
     <p className="proof-reason">{p.n === 1 ? '只有一項時，也把同一項寫兩次：2S₁ = 2a₁，再除以 2。' : '即使公差為負或跨過零，倒寫後仍是一增一減、互相抵消；不是把負值當成面積。'}</p>
   </div>;
 }

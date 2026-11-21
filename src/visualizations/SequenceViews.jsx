@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import { calculate } from '../math.js';
-import { chartDomain, geometricTail, visualFormat as f } from './proofModels.js';
+import { arithmeticPartialSum, chartDomain, geometricTail, visualFormat as f } from './proofModels.js';
 import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 
 export function ShapeView({ id, c, proof, setProof, selected, setSelected }) {
@@ -52,10 +52,10 @@ export function SequenceChart({ values, selected, setSelected, cumulative = fals
 export function SumView({ id, c, selected, setSelected }) {
   const k = (selected ?? c.params.n - 1) + 1;
   let total = 0;
-  const sums = c.values.map(v => (total += v));
+  const sums = c.values.map((v, i) => id === 'arithmetic' ? arithmeticPartialSum(c.params.a, c.params.d, i + 1) : (total += v));
   const reference = calculate(id, { ...c.params, n: 12 }).values;
   let running = 0;
-  const domainValues = reference.map(v => (running += v));
+  const domainValues = reference.map((v, i) => id === 'arithmetic' ? arithmeticPartialSum(c.params.a, c.params.d, i + 1) : (running += v));
   if (id === 'square' || id === 'triangular') return <div className="proof-scene" data-proof={`${id}-sum`}>
     <div className="proof-heading"><h3>加的是完整圖形，不是多加一排</h3><p>選第 k 個圖形，只累加到這裡；留意 aₖ 與 Sₖ 是兩個不同的量。</p></div>
     <div className="proof-sum-shapes">{c.values.map((value, i) => <button key={i} aria-pressed={k === i + 1} onClick={() => setSelected(i)} className={i < k ? 'proof-included' : ''}>

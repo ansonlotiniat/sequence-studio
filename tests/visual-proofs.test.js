@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, arithmeticPairTotal, arithmeticPartialSum, visualFormat, chartDomain } from '../src/visualizations/proofModels.js';
 import { calculate } from '../src/math.js';
 
 test('square decomposition conserves area and counts its corner only once, including n=1', () => {
@@ -63,4 +63,16 @@ test('geometric tail preserves small nonzero remainders and their alternating si
   assert.equal(geometricTail(0, 3, 12), 0);
   assert.equal(geometricTail(2, 0, 12), 0);
   assert.equal(geometricTail(2, 1, 12), null);
+});
+
+test('decimal arithmetic pairs cancel consistently without erasing genuinely tiny sums', () => {
+  assert.equal(arithmeticPairTotal(-0.3, 0.1, 7), 0);
+  assert.equal(arithmeticPartialSum(-0.3, 0.1, 7), 0);
+  assert.equal(arithmeticPairTotal(0.3, -0.1, 7), 0);
+  assert.equal(arithmeticPartialSum(1e-20, 0, 12), 12e-20);
+  for (const a of [-10, -0.3, 0, 0.2, 1e-20]) for (const d of [-1, -0.1, 0, 0.1, 3]) for (const n of [1, 7, 12]) {
+    const expected = calculate('arithmetic', { a, d, n }).sum;
+    assert.ok(Math.abs(arithmeticPartialSum(a, d, n) - expected) < 1e-12);
+  }
+  assert.ok(arithmeticPartialSum(-0.3, 0.10001, 7) > 0);
 });

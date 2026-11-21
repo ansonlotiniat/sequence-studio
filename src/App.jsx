@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import Layout, { LearningPath } from './Layout.jsx';
 import { calculate, defaults, lessons, normalize } from './math.js';
 import GuidedLesson from './learning/GuidedLesson.jsx';
+import { openLessonExperiment, updateGuidedStudy } from './learning/guided.js';
 import Practice from './learning/Practice.jsx';
 import { fromHash, practiceItem, readStudy, recordPractice, startPractice, storageKey } from './learning/progress.js';
 import Lab from './visualizations/Lab.jsx';
@@ -30,19 +31,21 @@ export default function App() {
   const openTutor = useCallback(() => setChatOpen(true), []);
   const [figureTutorScope, setFigureTutorScope] = useState(null);
   const returnToFigure = useRef(false);
-  const [view, setView] = useState('shape');
-  const [proof, setProof] = useState(false);
+  const [labView, setLabView] = useState('shape');
+  const [labProof, setLabProof] = useState(false);
   const [experimentRun, setExperimentRun] = useState(0);
-  const [lessonExperimentOpen, setLessonExperimentOpen] = useState(false);
   const [selection, setSelection] = useState(null);
   const { id, page } = study.location;
   const figureScope = `${id}:${page}`;
   const chapter = study.chapters[id] ?? {};
+  const guided = chapter.guided ?? {};
+  const view = page === 'learn' ? guided.view ?? 'shape' : labView;
+  const proof = page === 'learn' ? guided.proof ?? false : labProof;
   const index = lessons.findIndex(l => l.id === id);
   const lesson = lessons[index];
   const nextLesson = lessons[index + 1];
   const c = calculate(id, study.experiments[id] ?? defaults);
-  const visibleParams = page === 'lab' || (page === 'learn' && lessonExperimentOpen) ? c.params : null;
+  const visibleParams = page === 'lab' || (page === 'learn' && guided.observing) ? c.params : null;
   const baseContext = experimentContext(id, page, visibleParams, view, proof);
   const selectionBasis = contextKey(id, baseContext);
   const onSelectionChange = useCallback(term => setSelection(term ? { term, basis: selectionBasis } : null), [selectionBasis]);
@@ -72,9 +75,8 @@ export default function App() {
         if (!next || (next.id === current.location.id && next.page === current.location.page)) return current;
         return atLocation(current, next);
       });
-      setProof(false);
-      setView('shape');
-      setLessonExperimentOpen(false);
+      setLabProof(false);
+      setLabView('shape');
     };
     window.addEventListener('hashchange', onLocationChange);
     return () => window.removeEventListener('hashchange', onLocationChange);
@@ -82,8 +84,7 @@ export default function App() {
 
   function navigate(page, nextId = id) {
     const location = { id: nextId, page };
-    if (nextId !== id) { setView('shape'); setProof(false); }
-    if (nextId !== id || page !== study.location.page) setLessonExperimentOpen(false);
+    if (nextId !== id) { setLabView('shape'); setLabProof(false); }
     const hash = `#/${nextId}/${page}`;
     if (window.location.hash !== hash) window.history.pushState(null, '', hash);
     setStudy(current => atLocation(current, location));
@@ -98,10 +99,15 @@ export default function App() {
     });
   }, [id]);
 
+  function changeGuided(update) {
+    setStudy(current => updateGuidedStudy(current, id, update));
+  }
+
   function preset(next) {
     setParams(normalize(next.params));
-    setView(next.view);
-    setProof(next.proof ?? false);
+    changeGuided(current => openLessonExperiment(current, id, next));
+    setLabView(next.view);
+    setLabProof(next.proof ?? false);
     setExperimentRun(n => n + 1);
   }
 
@@ -164,8 +170,11 @@ export default function App() {
 
   const tutorResume = figureTutorScope === figureScope && <button type="button" className="outline-button tutor-resume"
     aria-controls="learning-tutor" aria-expanded={chatOpen} onClick={openTutor}><Sparkles size={16} aria-hidden="true"/>繼續對話</button>;
-  const lab = <Lab key={`${id}:${experimentRun}`} lesson={lesson} c={c} setParams={setParams} view={view} setView={setView}
-    proof={proof} setProof={setProof} onSelectionChange={onSelectionChange} tutorResume={tutorResume} />;
+  const lab = <Lab key={`${id}:${experimentRun}`} lesson={lesson} c={c} setParams={setParams} view={view}
+    setView={page === 'learn' ? value => changeGuided(current => ({ ...current, view: value })) : setLabView}
+    proof={proof} setProof={page === 'learn' ? value => changeGuided(current => ({
+      ...current, proof: typeof value === 'function' ? value(current.proof ?? false) : value,
+    })) : setLabProof} onSelectionChange={onSelectionChange} tutorResume={tutorResume} />;
 
   return <Layout {...{ study, lesson, navigate, chatOpen, closeTutor, openTutor }}
     tutor={<Tutor chatOpen={chatOpen} setChatOpen={setChatOpen} lesson={lesson}
@@ -175,8 +184,7 @@ export default function App() {
         onLab={() => navigate('lab')} onLearn={() => navigate('learn')} hasNext={Boolean(nextLesson)}
         onNextChapter={() => nextLesson ? navigate('learn', nextLesson.id) : navigate('path')}
         onRestart={() => changePractice(startPractice(id, c.params, chapter.practice))} /> : page === 'learn' ?
-      <GuidedLesson key={id} id={id} observing={lessonExperimentOpen} tutorResume={tutorResume}
-        onOpenExperiment={next => { setLessonExperimentOpen(true); preset(next); }}
+      <GuidedLesson key={id} id={id} guided={guided} changeGuided={changeGuided} tutorResume={tutorResume}
         onPreset={preset} onQuiz={() => navigate('quiz')}>{lab}</GuidedLesson> : <>
         {lab}
         <section className="next-step">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { workedComputation } from './worked.js';
 import FinanceLab from './FinanceLab.jsx';
 
@@ -17,22 +17,20 @@ const visual = { square: 'sum', arithmetic: 'graph', geometric: 'sum', triangula
 const targets = { arithmetic: 31, triangular: 15, annuity: 3000 };
 const financeModes = [['fv', '終值'], ['pv', '現值'], ['loan', '每月供款']];
 
-export default function WorkedLab({ id, startingParams, onShowExperiment, onWorked }) {
-  const [draft, setDraft] = useState({ first: 1, second: 1, target: targets[id], ...startingParams });
-  const [result, setResult] = useState(null);
-  const [mode, setMode] = useState('fv');
+export default function WorkedLab({ id, startingParams, workspace, onWorkspaceChange, onShowExperiment }) {
+  const defaultDraft = { first: 1, second: 1, target: targets[id], ...startingParams };
+  const { draft = defaultDraft, submitted, mode = 'fv' } = workspace;
+  const result = submitted && { params: submitted, steps: workedComputation(id, submitted) };
 
   function edit(key, value) {
-    setDraft(previous => ({ ...previous, [key]: value }));
-    setResult(null);
+    onWorkspaceChange(current => ({ ...current, draft: { ...(current.draft ?? defaultDraft), [key]: value }, submitted: null }));
   }
 
   function compute(event) {
     event.preventDefault();
     const params = { ...draft };
     for (const [key] of fields[id]) params[key] = Number(draft[key]);
-    setResult({ params, steps: workedComputation(id, params) });
-    onWorked();
+    onWorkspaceChange(current => ({ ...current, submitted: params }), true);
   }
 
   const customRecurrence = id === 'fibonacci' && result && (result.params.first !== 1 || result.params.second !== 1);
@@ -41,7 +39,7 @@ export default function WorkedLab({ id, startingParams, onShowExperiment, onWork
     <h3>用自訂數據逐步演算</h3>
     {id === 'annuity' && <div className="lesson-actions finance-modes" role="group" aria-label="年金演算情境">
       {financeModes.map(([value, label]) => <button type="button" key={value} className="outline-button"
-        aria-pressed={mode === value} onClick={() => setMode(value)}>{label}</button>)}
+        aria-pressed={mode === value} onClick={() => onWorkspaceChange(current => ({ ...current, mode: value }))}>{label}</button>)}
     </div>}
     <div hidden={mode !== 'fv'}>
     <p>先預測，再輸入一組數據。第一次只改一個數，比較哪一步、哪個量跟著變。</p>
@@ -69,7 +67,8 @@ export default function WorkedLab({ id, startingParams, onShowExperiment, onWork
     </div>
     </div>
     {id === 'annuity' && financeModes.slice(1).map(([value]) => <div key={value} hidden={mode !== value}>
-      <FinanceLab mode={value} onWorked={onWorked} />
+      <FinanceLab mode={value} workspace={workspace[value] ?? {}} onWorkspaceChange={(update, worked) =>
+        onWorkspaceChange(current => ({ ...current, [value]: update(current[value] ?? {}) }), worked)} />
     </div>)}
   </section>;
 }

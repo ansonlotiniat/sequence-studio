@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import { sequenceBasics, teaching } from './content.js';
 import { lessonDepth } from './depth.js';
 import WorkedLab from './WorkedLab.jsx';
 import { SquareSumLesson } from '../visualizations/LearningModels.jsx';
+import { lessonStages } from './guided.js';
 import ComparisonTable from '../ComparisonTable.jsx';
 
 const stages = [['lesson-ready', '準備'], ['lesson-predict', '實驗'], ['lesson-worked', '演算'],
@@ -42,30 +43,21 @@ function Step({ step }) {
   </figure>;
 }
 
-export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset, onQuiz, tutorResume, children }) {
+export default function GuidedLesson({ id, guided, changeGuided, onPreset, onQuiz, tutorResume, children }) {
   const lesson = teaching[id];
   const depth = lessonDepth[id];
-  const [ready, setReady] = useState(null);
-  const [prediction, setPrediction] = useState('');
-  const [exitOpen, setExitOpen] = useState(false);
-  const [reviewed, setReviewed] = useState(false);
-  const [worked, setWorked] = useState(false);
-  const [check, setCheck] = useState(null);
-  const [squareMission, setSquareMission] = useState(true);
-  const [squareCheck, setSquareCheck] = useState(null);
+  const { ready = null, prediction = '', exitOpen = false, check = null, observing, squareMission, square } = guided;
   const [question, options, expected, explanation] = lesson.readiness;
   const [checkQuestion, correct, distractor, checkReason] = checkIns[id];
   const checkOptions = expected === 0 ? [distractor, correct] : [correct, distractor];
   const directSquareMission = id === 'square' && squareMission;
-  const completed = [ready === expected, observing && (!directSquareMission || squareCheck?.correct), worked, check === correct, reviewed];
+  const completed = lessonStages(guided, id, expected, correct);
   const completedCount = completed.filter(Boolean).length;
-  function showPreset(preset, apply) {
-    if (id === 'square') {
-      const mission = preset.view === 'sum' && Number(preset.params.n) === 3;
-      setSquareMission(mission);
-      if (!mission) setSquareCheck(null);
-    }
-    apply(preset);
+  function patchGuided(patch) {
+    changeGuided(current => ({ ...current, ...patch }));
+  }
+  function changeSquare(update) {
+    changeGuided(current => ({ ...current, square: update(current.square) }));
   }
   function jump(target) {
     const section = document.getElementById(target);
@@ -90,7 +82,7 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
       <p><strong>先備知識：</strong>{lesson.prerequisite}</p>
       <fieldset className="lesson-options">
         <legend>{question}</legend>
-        {options.map((option, i) => <button type="button" key={option} aria-pressed={ready === i} className="outline-button" onClick={() => setReady(i)}>{option}</button>)}
+        {options.map((option, i) => <button type="button" key={option} aria-pressed={ready === i} className="outline-button" onClick={() => patchGuided({ ready: i })}>{option}</button>)}
       </fieldset>
       {ready !== null && <p className="lesson-feedback" role="status"><strong>{ready === expected ? '答對了。' : '先補一小步。'}</strong> {explanation}</p>}
     </section>
@@ -100,21 +92,25 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
       <h3>預測後，用實驗找證據</h3>
       <p>{lesson.hook}</p>
       <label className="prediction-label" htmlFor="prediction">{lesson.prediction}</label>
-      <textarea id="prediction" rows="2" value={prediction} onChange={e => setPrediction(e.target.value)} placeholder="寫下你的猜想和理由（不評分）" maxLength={500} />
-      {!observing && <button type="button" className="primary-button" onClick={() => showPreset(lesson.presets[0], onOpenExperiment)}>打開實驗，核對猜想 <ArrowRight size={16}/></button>}
+      <textarea id="prediction" rows="2" value={prediction} onChange={e => patchGuided({ prediction: e.target.value })} placeholder="寫下你的猜想和理由（不評分）" maxLength={500} />
+      {!observing && <button type="button" className="primary-button" onClick={() => onPreset(lesson.presets[0])}>打開實驗，核對猜想 <ArrowRight size={16}/></button>}
       {observing && <>
         <p className="lesson-feedback"><Lightbulb size={16} /> {lesson.observation}</p>
-        <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => showPreset(preset, onPreset)}>{preset.label}</button>)}</div>
+        <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => onPreset(preset)}>{preset.label}</button>)}</div>
       </>}
     </section>
     <div id="lesson-experiment" tabIndex={-1} role="region" aria-label="數列實驗">{observing && (directSquareMission ? <section className="lesson-card" id="experiment-figure" tabIndex={-1}>
       {tutorResume}
-      <SquareSumLesson n={3} onComplete={setSquareCheck} />
-      {squareCheck?.correct && <p className="lesson-feedback" role="status">已核對兩種計數。試改成 n=4，看看增加的是一圈還是一整層。</p>}
+      <SquareSumLesson n={3} workspace={square} onWorkspaceChange={changeSquare}
+        onComplete={({ correct }) => changeSquare(current => ({ ...current, correct }))} />
+      {square?.correct && <p className="lesson-feedback" role="status">已核對兩種計數。試改成 n=4，看看增加的是一圈還是一整層。</p>}
     </section> : children)}</div>
     <p className="lesson-card"><strong>探索任務：</strong>{depth.mission}</p>
-    <WorkedLab id={id} startingParams={lesson.presets[0].params} onWorked={() => setWorked(true)} onShowExperiment={preset => {
-      showPreset(preset, onOpenExperiment);
+    <WorkedLab id={id} startingParams={lesson.presets[0].params} workspace={guided.worksheet ?? {}}
+      onWorkspaceChange={(update, worked) => changeGuided(current => ({
+        ...current, worksheet: update(current.worksheet ?? {}), ...(worked ? { worked: true } : {}),
+      }))} onShowExperiment={preset => {
+      onPreset(preset);
       requestAnimationFrame(() => jump('lesson-experiment'));
     }} />
     <section className="lesson-card" id="explanation" tabIndex={-1}>
@@ -127,7 +123,7 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
       </details>)}
       <fieldset className="lesson-options">
         <legend>停一停，試答：{checkQuestion}</legend>
-        {checkOptions.map(option => <button type="button" key={option} aria-pressed={check === option} className="outline-button" onClick={() => setCheck(option)}>{option}</button>)}
+        {checkOptions.map(option => <button type="button" key={option} aria-pressed={check === option} className="outline-button" onClick={() => patchGuided({ check: option })}>{option}</button>)}
       </fieldset>
       {check !== null && <p role="status" className="lesson-feedback"><strong>{check === correct ? '答對了。' : '再想一步。'}</strong> {checkReason}</p>}
       <div className="worked-example">
@@ -166,8 +162,7 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
       <p>{lesson.exit[0]}</p>
       <div className="lesson-actions">
         <button type="button" className="outline-button" aria-expanded={exitOpen} onClick={() => {
-          setExitOpen(!exitOpen);
-          setReviewed(true);
+          changeGuided(current => ({ ...current, exitOpen: !current.exitOpen, reviewed: true }));
         }}>{exitOpen ? '收起核對' : '我想好了，核對理由'}</button>
         <button type="button" className="primary-button" onClick={onQuiz}>進入獨立練習 <ArrowRight size={16}/></button>
       </div>

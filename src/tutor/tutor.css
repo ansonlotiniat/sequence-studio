@@ -11,7 +11,7 @@
 .tutor-resume { min-height: 44px; }
 .tutor-look-at-figure { justify-self: start; }
 .tutor-resume { margin-bottom: .5rem; }
-#experiment-figure.lesson-card { scroll-margin-top: 84px; }
+.guided-lesson #experiment-figure.lesson-card { scroll-margin-top: inherit; }
 @media (min-width: 1280px) {
   .outline-button.tutor-look-at-figure,
   .outline-button.tutor-resume { display: none; }

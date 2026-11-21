@@ -3,7 +3,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import Layout, { LearningPath } from './Layout.jsx';
 import { calculate, defaults, lessons, normalize } from './math.js';
 import GuidedLesson from './learning/GuidedLesson.jsx';
-import { openLessonExperiment, updateGuidedStudy } from './learning/guided.js';
+import { openLessonExperiment, updateGuidedStudy, visibleExperimentParams } from './learning/guided.js';
 import Practice from './learning/Practice.jsx';
 import { fromHash, practiceItem, readStudy, recordPractice, startPractice, storageKey } from './learning/progress.js';
 import Lab from './visualizations/Lab.jsx';
@@ -45,7 +45,7 @@ export default function App() {
   const lesson = lessons[index];
   const nextLesson = lessons[index + 1];
   const c = calculate(id, study.experiments[id] ?? defaults);
-  const visibleParams = page === 'lab' || (page === 'learn' && guided.observing) ? c.params : null;
+  const visibleParams = visibleExperimentParams(id, page, guided, c.params);
   const baseContext = experimentContext(id, page, visibleParams, view, proof);
   const selectionBasis = contextKey(id, baseContext);
   const onSelectionChange = useCallback(term => setSelection(term ? { term, basis: selectionBasis } : null), [selectionBasis]);
@@ -115,9 +115,10 @@ export default function App() {
     if (!visibleParams || contextKey(id, tutorContext) !== contextKey(id, basis)) return;
     setStudy(current => {
       const params = normalize(current.experiments[id] ?? defaults);
+      const activeParams = visibleExperimentParams(id, page, current.chapters[id]?.guided ?? {}, params);
       if (current.location.id !== id || current.location.page !== page ||
-          contextKey(id, experimentContext(id, page, params, view, proof, basis.selected)) !== contextKey(id, basis)) return current;
-      const change = experimentAction(action, id, params);
+          contextKey(id, experimentContext(id, page, activeParams, view, proof, basis.selected)) !== contextKey(id, basis)) return current;
+      const change = experimentAction(action, id, activeParams);
       if (!change) return current;
       return { ...current, experiments: { ...current.experiments, [id]: { ...params, ...change.params } } };
     });

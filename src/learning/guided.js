@@ -1,3 +1,16 @@
+const squareMissionSize = 3;
+
+export function guidedSquareSize(id, guided) {
+  return id === 'square' && guided.observing && guided.squareMission ? squareMissionSize : null;
+}
+
+export function visibleExperimentParams(id, page, guided, params) {
+  if (page === 'lab') return params;
+  if (page !== 'learn' || !guided.observing) return null;
+  const n = guidedSquareSize(id, guided);
+  return n === null ? params : { ...params, n };
+}
+
 export function updateGuidedStudy(study, id, update) {
   const chapter = study.chapters[id] ?? {};
   return { ...study, chapters: {
@@ -6,7 +19,7 @@ export function updateGuidedStudy(study, id, update) {
 }
 
 export function openLessonExperiment(guided, id, preset) {
-  const squareMission = id === 'square' && preset.view === 'sum' && Number(preset.params.n) === 3;
+  const squareMission = id === 'square' && preset.view === 'sum' && Number(preset.params.n) === squareMissionSize;
   const resetSquare = id === 'square' && !squareMission && guided.square;
   return {
     ...guided, observing: true, view: preset.view, proof: preset.proof ?? false, squareMission,

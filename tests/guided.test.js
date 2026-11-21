@@ -1,12 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { editSquareWorkspace, lessonStages, openLessonExperiment, updateGuidedStudy } from '../src/learning/guided.js';
+import { editSquareWorkspace, lessonStages, openLessonExperiment, updateGuidedStudy, visibleExperimentParams } from '../src/learning/guided.js';
 import { readStudy, storageKey } from '../src/learning/progress.js';
 import { teaching } from '../src/learning/content.js';
+import { calculatedFacts, experimentContext } from '../src/tutor/context.js';
 
 const restore = study => readStudy({ getItem: key => key === storageKey ? JSON.stringify(study) : null });
 const experiment = { view: 'sum', params: { n: 3 } };
 const completeSquare = { placed: [1, 2, 3], answers: { term: '9', sum: '14' }, checked: true, correct: true };
+
+test('the tutor uses the guided square mission size, not the saved lab size', () => {
+  const guided = openLessonExperiment({}, 'square', experiment);
+  const labParams = { n: 4 };
+  const context = (page, state = guided) =>
+    experimentContext('square', page, visibleExperimentParams('square', page, state, labParams), state.view);
+  const lesson = context('learn');
+  assert.deepEqual(lesson.params, { n: 3 });
+  assert.equal(calculatedFacts('square', lesson).sum, 14);
+  assert.deepEqual(context('lab').params, { n: 4 });
+  assert.equal(calculatedFacts('square', context('lab')).sum, 30);
+  assert.deepEqual(context('learn', openLessonExperiment(guided, 'square', { view: 'shape', params: labParams })).params, { n: 4 });
+  assert.deepEqual(context('learn', {}), { page: 'learn' });
+});
 
 test('guided answers, workbooks, and placements survive lab and quiz navigation per chapter', () => {
   let study = readStudy();

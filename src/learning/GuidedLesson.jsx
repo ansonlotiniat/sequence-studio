@@ -4,7 +4,7 @@ import { sequenceBasics, teaching } from './content.js';
 import { lessonDepth } from './depth.js';
 import WorkedLab from './WorkedLab.jsx';
 import { SquareSumLesson } from '../visualizations/LearningModels.jsx';
-import { lessonStages } from './guided.js';
+import { guidedSquareSize, lessonStages } from './guided.js';
 import ComparisonTable from '../ComparisonTable.jsx';
 
 const stages = [['lesson-ready', '準備'], ['lesson-predict', '實驗'], ['lesson-worked', '演算'],
@@ -46,11 +46,11 @@ function Step({ step }) {
 export default function GuidedLesson({ id, guided, changeGuided, onPreset, onQuiz, tutorResume, children }) {
   const lesson = teaching[id];
   const depth = lessonDepth[id];
-  const { ready = null, prediction = '', exitOpen = false, check = null, observing, squareMission, square } = guided;
+  const { ready = null, prediction = '', exitOpen = false, check = null, observing, square } = guided;
   const [question, options, expected, explanation] = lesson.readiness;
   const [checkQuestion, correct, distractor, checkReason] = checkIns[id];
   const checkOptions = expected === 0 ? [distractor, correct] : [correct, distractor];
-  const directSquareMission = id === 'square' && squareMission;
+  const squareSize = guidedSquareSize(id, guided);
   const completed = lessonStages(guided, id, expected, correct);
   const completedCount = completed.filter(Boolean).length;
   function patchGuided(patch) {
@@ -99,9 +99,9 @@ export default function GuidedLesson({ id, guided, changeGuided, onPreset, onQui
         <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => onPreset(preset)}>{preset.label}</button>)}</div>
       </>}
     </section>
-    <div id="lesson-experiment" tabIndex={-1} role="region" aria-label="數列實驗">{observing && (directSquareMission ? <section className="lesson-card" id="experiment-figure" tabIndex={-1}>
+    <div id="lesson-experiment" tabIndex={-1} role="region" aria-label="數列實驗">{observing && (squareSize !== null ? <section className="lesson-card" id="experiment-figure" tabIndex={-1}>
       {tutorResume}
-      <SquareSumLesson n={3} workspace={square} onWorkspaceChange={changeSquare}
+      <SquareSumLesson n={squareSize} workspace={square} onWorkspaceChange={changeSquare}
         onComplete={({ correct }) => changeSquare(current => ({ ...current, correct }))} />
       {square?.correct && <p className="lesson-feedback" role="status">已核對兩種計數。試改成 n=4，看看增加的是一圈還是一整層。</p>}
     </section> : children)}</div>

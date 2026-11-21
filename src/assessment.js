@@ -1,5 +1,6 @@
 import { arithmeticTerm, calculate, defaults, normalize, powerSums, recurrence } from './math.js';
 import { annuityPresentValue, amortizeLoan } from './learning/finance.js';
+import { superscript } from './visualizations/mathNotation.js';
 
 const significantDigits = 8;
 const roundSignificant = value => Number(value.toPrecision(significantDigits));
@@ -163,7 +164,7 @@ const questions = {
       const a = v ? 2 + v % 9 : p.a, r = v ? [0, 1, -2, 0.5][v % 4] : p.r, n = v ? 4 + v % 8 : p.n + 1;
       const answer = a * r ** (n - 1);
       return { ...number(`數列由首項 ${a} 開始，每一步乘 ${r}。第 ${n} 項是多少？`, answer,
-        [`由第 1 項到第 ${n} 項，共乘 ${n - 1} 次。`, `aₙ = ${a} × ${parenthesize(r)}^(${n - 1}) = ${roundSignificant(answer)}（按題目精度）。`],
+        [`由第 1 項到第 ${n} 項，共乘 ${n - 1} 次。`, `aₙ = ${a} × ${parenthesize(r)}${superscript(n - 1)} = ${roundSignificant(answer)}（按題目精度）。`],
         ['一步代表乘一次，不是加一次。', `由第 1 項到第 ${n} 項，指數是 ${n - 1}。`],
         [[a * r ** n, '檢查是否多乘了一次。'], [0, '很小不等於零，試用科學記數法保留有效數字。']], 'significant'), scenario: { a, r, n } };
     },
@@ -177,7 +178,7 @@ const questions = {
     (_, v) => {
       const a = 2 + v % 5, n = 3 + v % 6, r = [2, 1, 0, -1][v % 4], c = calculate('geometric', { a, n, r });
       return number(`首項 ${a}，每步乘 ${r}，前 ${n} 項相加是多少？`, c.sum,
-        [`列出各項：${c.values.join('，')}。`, r === 1 ? `r = 1，不用含 1−r 的除法；Sₙ = ${n} × ${a} = ${c.sum}。` : `Sₙ = ${a}(1 − ${parenthesize(r)}^${n}) ÷ (1 − ${parenthesize(r)}) = ${c.sum}。`],
+        [`列出各項：${c.values.join('，')}。`, r === 1 ? `r = 1，不用含 1−r 的除法；Sₙ = ${n} × ${a} = ${c.sum}。` : `Sₙ = ${a}(1 − ${parenthesize(r)}${superscript(n)}) ÷ (1 − ${parenthesize(r)}) = ${c.sum}。`],
         ['這是有限和，不是最後一項。', '若 r=1，每一項都等於首項，直接乘項數。'],
         [[c.last, '這是單項；請把題目的所有項相加。']]);
     },

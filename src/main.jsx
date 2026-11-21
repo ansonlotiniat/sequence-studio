@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ArrowUpRight, ArrowRight, ArrowLeft, BookOpen, Check, CheckCheck, ChevronRight, CircleHelp, Download, Grid2X2, Layers, Lightbulb, LineChart, Menu, Minus, Pause, Play, Plus, RotateCcw, Send, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { lessons, defaults, normalize, calculate, format as f, makeQuiz } from './math';
+import { buildChatHistory } from './chat.js';
 import '@fontsource-variable/noto-sans-tc';
 import './styles.css';
 
@@ -47,7 +48,7 @@ function App() {
     const next = [...messages, { role: 'user', text: text.trim() }];
     setMessages(next); setQuestion(''); setBusy(true); setPendingAction(null);
     try {
-      const response = await fetch('/api/tutor', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:next.filter(m => m.role === 'user' || !m.error).slice(-10), lesson:id, params:p}) });
+      const response = await fetch('/api/tutor', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:buildChatHistory(next), lesson:id, params:p}) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || '暫時無法連接，請稍後再試。');
       setMessages(v => [...v, {role:'assistant', text:data.reply}]);

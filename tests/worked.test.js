@@ -27,7 +27,7 @@ test('custom arithmetic and triangular workbooks support exact and impossible in
 
 test('custom geometric calculations distinguish terms, partial sums and limits', () => {
   const step = (r, a = 6) => workedComputation('geometric', { a, r, n: 3 }).at(-1);
-  assert.match(step(-0.5), /≈ 4.*≈ -0\.5/);
+  assert.match(step(-0.5), /= 4.*= -0\.5/);
   assert.match(step(-1), /不收斂/);
   assert.match(step(1, 0), /一直是零/);
   assert.match(workedComputation('geometric', { a: 6, r: 0, n: 1 })[0], /直接是 6/);
@@ -51,8 +51,8 @@ test('custom annuity uses the chosen timing and can invert the target or handle 
   const input = { ...defaults, n: 2, rate: 10, payment: 1000, target: 2310 };
   const due = workedComputation('annuity', { ...input, due: true }).join(' ');
   assert.match(due, /t=0.*2−0=2 年/);
-  assert.match(due, /終值 ≈ MOP 2310；減去本金 MOP 2000，利息 ≈ MOP 310/);
-  assert.match(due, /目標÷終值係數 ≈ MOP 1000/);
+  assert.match(due, /終值 = MOP 2310；減去本金 MOP 2000，利息 = MOP 310/);
+  assert.match(due, /目標÷終值係數 = MOP 1000/);
   assert.match(workedComputation('annuity', input)[2], /t=2.*2−2=0 年/);
   assert.match(workedComputation('annuity', { ...input, rate: 0 }).join(' '), /終值＝2×1000＝MOP 2000，利息為零/);
 });

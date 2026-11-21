@@ -1,5 +1,6 @@
 import { arithmeticTerm, calculate, powerSums, recurrence } from '../math.js';
 import { superscript } from '../visualizations/mathNotation.js';
+import { exactDecimal as exact, exactSum, exactArithmeticSum, displayRelation as relation } from './exactDisplay.js';
 
 const display = x => String(Number(x.toPrecision(10)));
 const group = x => `(${display(x)})`;
@@ -28,23 +29,34 @@ export function workedComputation(id, input) {
         `前 ${n} 個立方和：先求整數和，再平方；(${linear})² = ${cube}。`,
       ];
     }
-    case 'arithmetic':
+    case 'arithmetic': {
+      const term = exact(a).plus(exact(d).times(exact(n - 1)));
+      const sum = exactArithmeticSum(c.params);
+      const shownTerm = exact(display(a)).plus(exact(display(d)).times(exact(n - 1)));
+      const shownSum = exact(n).times(exact(display(a)).plus(exact(display(c.last)))).dividedBy(exact(2));
       return [
-        `由第 1 項走到第 ${n} 項有 ${n - 1} 步：aₙ = ${display(a)} + ${n - 1}×${group(d)} = ${display(c.last)}。`,
+        `由第 1 項走到第 ${n} 項有 ${n - 1} 步：aₙ ${relation(term, shownTerm)} ${display(a)} + ${n - 1}×${group(d)} ${relation(term, display(c.last), shownTerm)} ${display(c.last)}。`,
         `各項為：${c.values.map(display).join('、')}。`,
-        `正寫和倒寫各一份，每欄都是首項加末項。Sₙ = ${n}×(${display(a)} + ${group(c.last)})÷2 = ${display(c.sum)}。`,
+        `正寫和倒寫各一份，每欄都是首項加末項。Sₙ ${relation(sum, shownSum)} ${n}×(${display(a)} + ${group(c.last)})÷2 ${relation(sum, display(c.sum), shownSum)} ${display(c.sum)}。`,
         arithmeticPosition(a, d, input.target),
       ];
+    }
     case 'geometric': {
       const ratio = `(${r})`;
+      const first = exact(a), multiplier = exact(r), one = exact(1);
+      const terms = c.values.map((_, i) => first.times(multiplier.power(i)));
+      const term = terms.at(-1), sum = exactSum(terms);
+      const shownTerm = exact(display(a)).times(multiplier.power(n - 1));
+      const shownSum = exactSum(c.values.map(value => exact(display(value))));
       const finite = r === 1 ? `r=1，直接把 ${n} 個 ${display(a)} 相加。` :
-        `有限和：${display(a)}×[1−${ratio}${superscript(n)}]÷[1−${ratio}] ≈ ${display(c.sum)}。`;
+        `有限和：${display(a)}×[1−${ratio}${superscript(n)}]÷[1−${ratio}] ${relation(sum, display(c.sum), exact(display(a)).times(one.minus(multiplier.power(n))).dividedBy(one.minus(multiplier)))} ${display(c.sum)}。`;
+      const limit = Math.abs(r) < 1 ? first.dividedBy(one.minus(multiplier)) : null;
       const infinite = a === 0 ? '首項為零，所有項及部分和一直是零。' : Math.abs(r) < 1 ?
-        `|r|<1，無窮和為 ${display(a)}÷[1−${ratio}] ≈ ${display(a / (1 - r))}；無窮和減目前部分和 ≈ ${display(a * r ** n / (1 - r))}。` :
+        `|r|<1，無窮和為 ${display(a)}÷[1−${ratio}] ${relation(limit, display(a / (1 - r)), exact(display(a)).dividedBy(one.minus(multiplier)))} ${display(a / (1 - r))}；無窮和減目前部分和 ${relation(limit.times(multiplier.power(n)), display(a * r ** n / (1 - r)))} ${display(a * r ** n / (1 - r))}。` :
         '|r|≥1，且首項不是零；項不趨近零，因此部分和不收斂。';
       return [n === 1 ? `第 1 項直接是 ${display(a)}，不用乘，也不用計算 0⁰。` :
-        `共乘 ${n - 1} 次：aₙ = ${display(a)}×${ratio}${superscript(n - 1)} ≈ ${display(c.last)}。`,
-        `把各項相加：${add(c.values)} ≈ ${display(c.sum)}。`, finite, infinite];
+        `共乘 ${n - 1} 次：aₙ ${relation(term, shownTerm)} ${display(a)}×${ratio}${superscript(n - 1)} ${relation(term, display(c.last), shownTerm)} ${display(c.last)}。`,
+        `把各項相加：${add(c.values)} ${relation(sum, display(c.sum), shownSum)} ${display(c.sum)}。`, finite, infinite];
     }
     case 'triangular': {
       const target = input.target, layers = Math.floor(Math.sqrt(2 * target));
@@ -67,15 +79,24 @@ export function workedComputation(id, input) {
     }
     case 'annuity': {
       const factor = calculate('annuity', { ...c.params, payment: 1 }).sum;
+      const interestRate = exact(rate).dividedBy(exact(100));
+      const multiplier = exact(1).plus(interestRate);
+      const powers = c.values.map((_, i) => n - i - (due ? 0 : 1));
+      const exactFactor = exactSum(powers.map(power => multiplier.power(power)));
+      const total = exact(payment).times(exactFactor);
+      const interest = total.minus(exact(payment).times(exact(n)));
+      const shownFactor = exactSum(powers.map(power => exact(1).plus(exact(display(rate / 100))).power(power)));
       return [
-        `以第 ${n} 年年末為終點；利率 ${rate}% = ${display(rate / 100)}，每年乘 ${display(1 + rate / 100)}。`,
+        `以第 ${n} 年年末為終點；利率 ${rate}% ${relation(interestRate, display(rate / 100))} ${display(rate / 100)}，每年乘 ${display(1 + rate / 100)}。`,
         ...c.values.map((value, i) => {
           const t = i + (due ? 0 : 1);
-          return `第 ${i + 1} 筆在 t=${t} 存入，生息 ${n}−${t}=${n - t} 年：MOP ${payment}×${group(1 + rate / 100)}${superscript(n - t)} ≈ MOP ${display(value)}。`;
+          const deposit = exact(payment).times(multiplier.power(n - t));
+          const shownDeposit = exact(payment).times(exact(display(1 + rate / 100)).power(n - t));
+          return `第 ${i + 1} 筆在 t=${t} 存入，生息 ${n}−${t}=${n - t} 年：MOP ${payment}×${group(1 + rate / 100)}${superscript(n - t)} ${relation(deposit, display(value), shownDeposit)} MOP ${display(value)}。`;
         }),
         rate === 0 ? `零利率：終值＝${n}×${payment}＝MOP ${display(c.principal)}，利息為零。` :
-          `用等比和核對：[(1+${display(rate / 100)})${superscript(n)}−1]÷${display(rate / 100)}${due ? `，期初再乘 (1+${display(rate / 100)})` : ''}，得到每 MOP 1 的終值係數 ≈ ${display(factor)}。總終值 ≈ MOP ${display(c.sum)}；減去本金 MOP ${display(c.principal)}，利息 ≈ MOP ${display(c.sum - c.principal)}。`,
-        `反向：若以 MOP ${input.target} 為目標，所需每筆存款＝目標÷終值係數 ≈ MOP ${display(input.target / factor)}（計算時不先四捨五入係數）。`,
+          `用等比和核對：[(1+${display(rate / 100)})${superscript(n)}−1]÷${display(rate / 100)}${due ? `，期初再乘 (1+${display(rate / 100)})` : ''}，得到每 MOP 1 的終值係數 ${relation(exactFactor, display(factor), shownFactor)} ${display(factor)}。總終值 ${relation(total, display(c.sum))} MOP ${display(c.sum)}；減去本金 MOP ${display(c.principal)}，利息 ${relation(interest, display(c.sum - c.principal))} MOP ${display(c.sum - c.principal)}。`,
+        `反向：若以 MOP ${input.target} 為目標，所需每筆存款＝目標÷終值係數 ${relation(exact(input.target)?.dividedBy(exactFactor), display(input.target / factor))} MOP ${display(input.target / factor)}（計算時不先四捨五入係數）。`,
       ];
     }
     default: return [];

@@ -26,12 +26,12 @@ test('dynamic indices and powers retain every digit, including zero and two-digi
 
 test('worked and practice powers preserve bases, exponents and computed results', () => {
   const geometric = workedComputation('geometric', { n: 5, a: 2, r: 2 });
-  assert.match(geometric[0], /2×\(2\)⁴ ≈ 32/);
-  assert.match(geometric[2], /2×\[1−\(2\)⁵\]÷\[1−\(2\)\] ≈ 62/);
+  assert.match(geometric[0], /2×\(2\)⁴ = 32/);
+  assert.match(geometric[2], /2×\[1−\(2\)⁵\]÷\[1−\(2\)\] = 62/);
   const annuity = workedComputation('annuity', { n: 3, payment: 1000, rate: 10, due: false, target: 3000 });
-  assert.match(annuity[1], /1000×\(1\.1\)² ≈ MOP 1210/);
-  assert.match(annuity[3], /1000×\(1\.1\)⁰ ≈ MOP 1000/);
-  assert.match(annuity[4], /\[\(1\+0\.1\)³−1\].*終值 ≈ MOP 3310/);
+  assert.match(annuity[1], /1000×\(1\.1\)² = MOP 1210/);
+  assert.match(annuity[3], /1000×\(1\.1\)⁰ = MOP 1000/);
+  assert.match(annuity[4], /\[\(1\+0\.1\)³−1\].*終值 = MOP 3310/);
   assert.match(makeItem('geometric', 0, 0, { n: 5, a: 2, r: 2 }).steps[1], /2 × 2⁵ = 64/);
   assert.match(makeItem('geometric', 2, 0).steps[1], /2³.*= 14/);
 });

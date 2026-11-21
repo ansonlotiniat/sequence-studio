@@ -46,7 +46,7 @@ export function SequenceChart({ values, selected, setSelected, cumulative = fals
       <svg className="proof-chart-svg" viewBox={`0 0 ${allowLog ? chartWidth : 700} 300`} role="group" aria-labelledby={titleId}>
         <title id={titleId}>{title}；橫軸為{annuityYear === null ? '項數 k' : '存款順序 k'}</title>
         <text x="12" y="18" className="proof-svg-label">{allowLog && log ? '對數距離' : annuityYear !== null ? 'FV ($)' : cumulative ? 'Sₖ' : 'aₖ'}</text>
-        {Array.from({ length: 5 }, (_, i) => { const v = min + i * (max - min) / 4; return <g key={i}><line x1={left} x2={right} y1={axisY(v)} y2={axisY(v)} className="proof-gridline"/><text x={left - 10} y={axisY(v) + 4} textAnchor="end" className="proof-svg-label">{allowLog ? Number(v.toPrecision(3)).toLocaleString('zh-Hant') : f(v)}</text></g>; })}
+        {Array.from({ length: 5 }, (_, i) => { const v = min + i * (max - min) / 4; return <g key={i}><line x1={left} x2={right} y1={axisY(v)} y2={axisY(v)} className="proof-gridline"/><text x={left - 10} y={axisY(v) + 4} textAnchor="end" className="proof-svg-label">{allowLog && log ? Number(v.toPrecision(3)).toLocaleString('zh-Hant') : f(v)}</text></g>; })}
         <line x1={left} x2={right} y1={y(0)} y2={y(0)} className="proof-zero-line"/>
         {limit !== null && <g><line x1={left} x2={right} y1={y(limit)} y2={y(limit)} className="proof-limit-line"/><text x={right} y={y(limit) - 10} textAnchor="end" className="proof-svg-label">極限 S∞ = {f(limit)}</text></g>}
         {connect && values.length > 1 && <polyline points={values.map((v, i) => `${x(i)},${y(v)}`).join(' ')} className="proof-chart-line"/>}

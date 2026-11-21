@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { annuityPresentValue, amortizeLoan, presentValueFactor } from './finance.js';
 import ComparisonTable from '../ComparisonTable.jsx';
 
@@ -18,20 +18,22 @@ const models = {
   ],
 };
 
-export default function FinanceLab({ mode, onWorked }) {
+export default function FinanceLab({ mode, workspace, onWorkspaceChange }) {
   const fields = models[mode];
-  const [draft, setDraft] = useState(() => Object.fromEntries(fields.map(([key, , , , , value]) => [key, value])));
-  const [due, setDue] = useState(false);
-  const [result, setResult] = useState(null);
+  const defaultDraft = Object.fromEntries(fields.map(([key, , , , , value]) => [key, value]));
+  const { draft = defaultDraft, due = false, submitted } = workspace;
   const pv = mode === 'pv';
+  const result = useMemo(() => {
+    if (!submitted) return null;
+    const { payment, percent, periods, principal, due } = submitted;
+    return { ...submitted, ...(pv ? { rate: percent / 100,
+      present: annuityPresentValue(payment, percent / 100, periods, due) } : amortizeLoan(principal, percent, periods)) };
+  }, [pv, submitted]);
 
   function compute(event) {
     event.preventDefault();
     const params = Object.fromEntries(Object.entries(draft).map(([key, value]) => [key, Number(value)]));
-    const { payment, percent, periods, principal } = params;
-    setResult({ ...params, due, ...(pv ? { rate: percent / 100,
-      present: annuityPresentValue(payment, percent / 100, periods, due) } : amortizeLoan(principal, percent, periods)) });
-    onWorked();
+    onWorkspaceChange(current => ({ ...current, submitted: { ...params, due } }), true);
   }
 
   return <>
@@ -41,10 +43,14 @@ export default function FinanceLab({ mode, onWorked }) {
       <div className="worked-fields">
         {fields.map(([key, label, min, max, step]) => <label key={key}>{label}
           <input type="number" min={min} max={max} step={step} required value={draft[key]} onChange={event => {
-            setDraft({ ...draft, [key]: event.target.value }); setResult(null);
+            const value = event.target.value;
+            onWorkspaceChange(current => ({ ...current, draft: { ...(current.draft ?? defaultDraft), [key]: value }, submitted: null }));
           }} />
         </label>)}
-        {pv && <label>收款時點<select value={due ? 'due' : 'ordinary'} onChange={event => { setDue(event.target.value === 'due'); setResult(null); }}>
+        {pv && <label>收款時點<select value={due ? 'due' : 'ordinary'} onChange={event => {
+          const due = event.target.value === 'due';
+          onWorkspaceChange(current => ({ ...current, due, submitted: null }));
+        }}>
           <option value="ordinary">每年年末</option><option value="due">每年年初</option>
         </select></label>}
       </div>

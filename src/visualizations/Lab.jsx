@@ -73,5 +73,13 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
 function NumberControl({ label, value, onChange, min, max, step }) {
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
-  return <label className="number-control"><span>{label}</span><input type="number" value={draft} min={min} max={max} step={step} onChange={e => { setDraft(e.target.value); if (e.target.value.trim() && Number.isFinite(e.target.valueAsNumber)) onChange(e.target.valueAsNumber); }} onBlur={() => { if (!draft.trim()) setDraft(String(value)); else { const bounded = Math.min(max, Math.max(min, Number(draft))); setDraft(String(bounded)); onChange(bounded); } }}/></label>;
+  function commit() {
+    if (!draft.trim() || !Number.isFinite(Number(draft))) { setDraft(String(value)); return; }
+    const bounded = Math.min(max, Math.max(min, Number(draft)));
+    setDraft(String(bounded)); onChange(bounded);
+  }
+  return <label className="number-control"><span>{label}</span><input type="number" value={draft} min={min} max={max} step={step} title="輸入後按 Enter 或離開欄位套用；Esc 還原" onChange={e => setDraft(e.target.value)} onBlur={commit} onKeyDown={e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { e.preventDefault(); setDraft(String(value)); }
+  }}/></label>;
 }

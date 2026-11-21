@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, formatIndex, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks } from '../src/visualizations/proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, formatIndex, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks, squareSumCells, squareSumTower, annuityLedger } from '../src/visualizations/proofModels.js';
 import { arithmeticPairTotal, arithmeticPartialSum, calculate } from '../src/math.js';
 
 test('integer indices use Unicode subscript and superscript digits', () => {
@@ -69,6 +69,47 @@ test('log distances preserve zero, sign and equal spacing for multiplicative mag
   }
   const scale = signedLogScale([2, 4, 8]);
   assert.ok(Math.abs((scale.map(8) - scale.map(4)) - (scale.map(4) - scale.map(2))) < 1e-12);
+});
+
+test('moving square pieces conserves the whole-square areas without overlaps or duplicates', () => {
+  for (let n = 1; n <= 12; n++) {
+    const terms = Array.from({ length: n }, (_, i) => i + 1);
+    const cells = squareSumCells(terms.toReversed());
+    const tower = squareSumTower([...terms.toReversed(), n]);
+    assert.equal(tower.length, cells.length);
+    assert.equal(new Set(tower.map(cube => `${cube.x}:${cube.y}:${cube.z}`)).size, tower.length);
+    assert.equal(Math.max(...tower.map(cube => cube.z)), n - 1);
+    for (const term of terms) {
+      const layer = tower.filter(cube => cube.term === term);
+      assert.equal(layer.length, term * term);
+      assert.ok(layer.every(cube => cube.z === n - term));
+      assert.equal(Math.min(...layer.map(cube => cube.x)), (n - term) / 2);
+      assert.equal(Math.max(...layer.map(cube => cube.x)) + 1, (n + term) / 2);
+    }
+    assert.equal(cells.length, n * (n + 1) * (2 * n + 1) / 6);
+    assert.equal(new Set(cells.map(cell => `${cell.row}:${cell.col}`)).size, cells.length);
+    for (const term of terms) assert.equal(cells.filter(cell => cell.term === term).length, term ** 2);
+    assert.equal(squareSumCells([...terms, n]).length, cells.length);
+    assert.equal(squareSumCells(terms.filter(term => term !== n)).length, cells.length - n ** 2);
+  }
+  assert.equal(squareSumCells([3]).length, 9);
+  assert.equal(squareSumCells([1, 2, 3]).length, 14);
+  assert.equal(squareSumTower([1, 3]).length, 10);
+  assert.equal(squareSumTower([1, 3]).filter(cube => cube.term === 1)[0].z, 1);
+});
+
+test('yearly account operations agree with common-horizon annuity values and deposit timing', () => {
+  for (const payment of [0, 1000, 100000]) for (const rate of [0, .05, .3]) for (const due of [false, true]) for (const n of [1, 3, 12]) {
+    const ledger = annuityLedger(payment, rate, n, due);
+    const canonical = calculate('annuity', { payment, rate: rate * 100, due, n });
+    assert.equal(ledger[0].balance, 0);
+    assert.ok(Math.abs(ledger.at(-1).balance - canonical.sum) <= Math.max(1, canonical.sum) * 1e-12);
+    assert.equal(ledger[1].interest, due ? payment * rate : 0);
+    for (const row of ledger.slice(1)) {
+      assert.ok(Math.abs(row.balance - row.opening - payment - row.interest) < 1e-7);
+      assert.ok(row.balance >= payment * row.year);
+    }
+  }
 });
 
 test('square decomposition conserves area and counts its corner only once, including n=1', () => {

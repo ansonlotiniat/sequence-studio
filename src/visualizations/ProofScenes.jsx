@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { arithmeticPairTotal } from '../math.js';
 import { squareTiles, triangleCopies, shiftedTerms, visualFormat as f } from './proofModels.js';
 import { ArithmeticPicture, GeometricPicture } from './SequencePictures.jsx';
+import { SquareSumExplorer, AnnuityTimeline } from './LearningModels.jsx';
 
 export function Legend({ items }) {
   return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{text}</li>)}</ul>;
@@ -16,7 +17,18 @@ export function TermPicker({ values, selected, onSelect, prefix = 'a', sources =
 
 function Equation({ children }) { return <div className="proof-equation" role="status">{children}</div>; }
 
-export function SquareProof({ c, selected, setSelected }) {
+export function SquareProof(props) {
+  const [mode, setMode] = useState('sum');
+  return <div>
+    <div className="square-model-switch" role="group" aria-label="平方數的兩種問題">
+      <button aria-pressed={mode === 'sum'} onClick={() => setMode('sum')}>平方和：拼完整正方形</button>
+      <button aria-pressed={mode === 'growth'} onClick={() => setMode('growth')}>單項：看新增的 L 形</button>
+    </div>
+    {mode === 'sum' ? <SquareSumExplorer key={props.c.params.n} {...props}/> : <SquareGrowthProof {...props}/>}
+  </div>;
+}
+
+function SquareGrowthProof({ c, selected, setSelected }) {
   const [split, setSplit] = useState(false);
   const k = (selected ?? c.params.n - 1) + 1;
   const old = (k - 1) ** 2, ring = 2 * k - 1;
@@ -38,26 +50,38 @@ export function SquareProof({ c, selected, setSelected }) {
 
 export function TriangleProof({ c, proof, setProof }) {
   const [adjacent, setAdjacent] = useState(false);
-  const region = useRef(null);
-  function reposition() { if (region.current) region.current.scrollLeft = 0; }
-  function changeMode(next) { if (next === adjacent) return; reposition(); setAdjacent(next); setProof(false); }
-  function assemble() { reposition(); setProof(!proof); }
-  const n = c.params.n, gap = 18, start = 28;
+  const [turned, setTurned] = useState(false);
+  const [compacted, setCompacted] = useState(proof);
+  function changeMode(next) { if (next === adjacent) return; setAdjacent(next); setProof(false); setTurned(false); }
+  const step = proof ? 2 : turned ? 1 : 0;
+  const n = c.params.n, gap = 22;
+  useEffect(() => {
+    if (!proof) { setCompacted(false); return; }
+    const timer = setTimeout(() => setCompacted(true), 750);
+    return () => clearTimeout(timer);
+  }, [proof, n, adjacent]);
   const { original, copy, columns } = triangleCopies(n, adjacent);
-  const secondOrigin = start + (n + 3) * gap;
+  // Reserve the rotating square's diagonal, not just its final bounding box.
+  const width = Math.max(260, (columns - 1) * gap * Math.SQRT2 + 44);
+  const start = (width - (columns - 1) * gap) / 2;
+  const secondY = n * gap + 64;
   const copyRows = adjacent ? n - 1 : n;
-  const transform = proof ? `translate(${start + (columns - 1) * gap}px, ${26 + (copyRows - 1) * gap}px) rotate(180deg)` : `translate(${secondOrigin}px, 26px) rotate(0deg)`;
+  const halfCopy = Math.max(0, copyRows - 1) * gap / 2;
+  const openHeight = secondY + halfCopy * (1 + Math.SQRT2) + 20;
+  const transform = `translate(${proof ? start + (columns - copyRows) * gap : start}px, ${proof ? 26 : secondY}px) rotate(${turned || proof ? 180 : 0}deg)`;
+  const captions = ['先數原件與副本：下一步只旋轉藍點，不新增點。', '藍色副本已旋轉 180°，數量不變；預測它能補在哪個空位。', `把旋轉後的副本移進空位，每一行都恰好 ${columns} 點。`];
   return <div className="proof-scene" data-proof="triangular">
     <div className="proof-heading"><h3>兩份點陣，不增不減地重排</h3><p>{adjacent ? '第二份少一排，預測會拼成甚麼。' : '先數兩份是否一樣多，再把藍色那份旋轉 180°。'}</p></div>
     <div className="proof-actions"><button className="proof-action" aria-pressed={!adjacent} onClick={() => changeMode(false)}>兩個 Tₙ → 長方形</button><button className="proof-action" aria-pressed={adjacent} onClick={() => changeMode(true)}>Tₙ + Tₙ₋₁ → 正方形</button></div>
-    <button className="proof-action proof-primary" aria-pressed={proof} onClick={assemble}>{proof ? '還原兩份點陣' : '旋轉第二份，拼合驗證'}</button>
-    <div ref={region} className="proof-scroll" tabIndex="0" role="region" aria-label="點陣證明，可橫向捲動；綠色原件與藍色副本">
-      <svg className="proof-unit-svg" width={proof ? Math.max(260, start + columns * gap + 12) : Math.max(300, secondOrigin + n * gap + 22)} height={n * gap + 28} role="img" aria-label={proof ? `${n} 行，每行 ${columns} 點，合共 ${n * columns} 點` : `第一份 ${original.length} 點，第二份 ${copy.length} 點`}>
-        {original.map(({ row, col }) => <circle key={`a${row}:${col}`} className="proof-fill-base" cx={start + col * gap} cy={26 + row * gap} r="6"/>)}
-        <g className="proof-moving" style={{ transform }}>{copy.map(({ row, col }) => <circle key={`b${row}:${col}`} className="proof-fill-copy" cx={col * gap} cy={row * gap} r="6"/>)}</g>
+    <p className="proof-reason" role="status">第 {step + 1}／3 步：{captions[step]}{adjacent && n === 1 ? ' 此例 T₀ = 0，藍色副本是空的。' : ''}</p>
+    <div className="learning-inline-actions"><button className="proof-action" disabled={step === 0} onClick={() => { if (proof) setProof(false); else setTurned(false); }}>上一步</button><button className="proof-action proof-primary" disabled={step === 2} onClick={() => { if (!turned) setTurned(true); else setProof(true); }}>{step === 0 ? '先旋轉藍色副本' : '再移入空位拼合'}</button></div>
+    <div className="proof-triangle-viewport" role="region" aria-label="點陣證明：綠色原件與藍色副本，全圖同時可見">
+      <svg key={`${n}:${adjacent}`} className="proof-triangle-svg" viewBox={`0 0 ${width} ${proof && compacted ? n * gap + 32 : openHeight}`} role="img" aria-label={proof ? `${n} 行，每行 ${columns} 點，合共 ${n * columns} 點` : `第一份 ${original.length} 點，第二份 ${copy.length} 點`}>
+        {original.map(({ row, col }) => <circle key={`a${row}:${col}`} className="proof-fill-base" cx={start + col * gap} cy={26 + row * gap} r="7"/>)}
+        <g className="proof-moving" style={{ transform, transformOrigin: `${(copyRows - 1) * gap / 2}px ${(copyRows - 1) * gap / 2}px` }}>{copy.map(({ row, col }) => <circle key={`b${row}:${col}`} className="proof-fill-copy" cx={col * gap} cy={row * gap} r="7"/>)}</g>
       </svg>
     </div>
-    <p className="proof-scale-note">{proof ? `${n} 行 × ${columns} 點；點數與顏色全程不變` : '向右捲動看第二份；每個點都會保留'}</p>
+    <p className="proof-scale-note">{proof ? `${n} 行 × ${columns} 點；點數與顏色全程不變` : '兩份點陣上下排列，不必左右捲動；每個點都保留。'}圖面隨螢幕縮放，每點仍代表 1。</p>
     {proof && <details className="proof-data"><summary>逐行檢查：為甚麼每行一樣多？</summary><div className="proof-row-counts">{Array.from({ length: n }, (_, row) => <span key={row}>第 {row + 1} 行：{row + 1} + {columns - row - 1} = {columns}</span>)}</div></details>}
     <Legend items={[[ 'base', `T${n}：${original.length} 點` ], [ 'copy', `T${adjacent ? n - 1 : n}：${copy.length} 點（藍色副本）` ]]}/>
     <Equation>{adjacent ? `${original.length} + ${copy.length} = ${n} × ${n} = ${n * n}` : `2 × T${n} = ${n} × ${n + 1} = ${n * (n + 1)}；T${n} = ${c.last}`}</Equation>
@@ -115,13 +139,16 @@ function UnitGroup({ count, first = count, label }) {
 
 export function FibonacciProof({ c, selected, setSelected }) {
   const k = selected ?? c.params.n - 1, values = c.values;
+  const [joined, setJoined] = useState(false);
+  useEffect(() => setJoined(false), [k]);
   return <div className="proof-scene" data-proof="fibonacci">
     <div className="proof-heading"><h3>把兩個來源，真的接成下一項</h3><p>選一項；用下標和顏色同時追蹤來源，不是把上一項翻倍。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected} prefix="F" sources/>
     {k < 2 ? <><Equation>F{k + 1} = 1（給定的初始條件）</Equation><p className="proof-reason">F₁ = F₂ = 1 是起點，不是由前面兩項算出來的。增加至 3 項後，才能第一次使用遞推規則。</p></> : <>
-      <div className="proof-fib-build"><div><h4>來源 A · F{k - 1} = {values[k - 2]}</h4><UnitGroup count={values[k - 2]} label={`F${k - 1}`}/></div><b aria-hidden="true">＋</b><div><h4>來源 B · F{k} = {values[k - 1]}</h4><UnitGroup count={values[k - 1]} first={0} label={`F${k}`}/></div><b aria-hidden="true">＝</b><div><h4>新項 · F{k + 1} = {values[k]}</h4><UnitGroup count={values[k]} first={values[k - 2]} label={`F${k + 1}`}/></div></div>
-      <Equation>F{k + 1} = F{k - 1} + F{k} = {values[k - 2]} + {values[k - 1]} = {values[k]}</Equation>
-      <p className="proof-reason">新項保留 {values[k - 2]} 個綠格和 {values[k - 1]} 個藍格；每格都是 1，沒有改變比例或增加額外單位。</p>
+      <p className="proof-reason" role="status">{joined ? `第 2／2 步：新項保留 ${values[k - 2]} 個綠格和 ${values[k - 1]} 個藍格，沒有額外增加單位。` : '第 1／2 步：先看兩個來源，預測合起來有幾格；不是把藍色那一組翻倍。'}</p>
+      <div className="proof-fib-build"><div><h4>來源 A · F{k - 1} = {values[k - 2]}</h4><UnitGroup count={values[k - 2]} label={`F${k - 1}`}/></div><b aria-hidden="true">＋</b><div><h4>來源 B · F{k} = {values[k - 1]}</h4><UnitGroup count={values[k - 1]} first={0} label={`F${k}`}/></div>{joined && <><b aria-hidden="true">＝</b><div><h4>新項 · F{k + 1} = {values[k]}</h4><UnitGroup count={values[k]} first={values[k - 2]} label={`F${k + 1}`}/></div></>}</div>
+      <button className="proof-action proof-primary" aria-pressed={joined} onClick={() => setJoined(!joined)}>{joined ? '分回兩個來源，再預測' : '把兩組接起來，檢查預測'}</button>
+      {joined && <Equation>F{k + 1} = F{k - 1} + F{k} = {values[k - 2]} + {values[k - 1]} = {values[k]}</Equation>}
     </>}
     <Legend items={[[ 'base', '來源 A：前兩項中的較早一項' ], [ 'copy', '來源 B：緊接的一項' ]]}/>
   </div>;
@@ -132,6 +159,7 @@ export function AnnuityProof({ c, selected, setSelected }) {
   const scale = p.payment > 0 ? 150 / (p.payment * (1 + p.rate / 100) ** 12) : 0;
   const ordinary = p.due ? c.sum / (1 + p.rate / 100) : c.sum;
   return <div className="proof-scene" data-proof="annuity">
+    <AnnuityTimeline key={`${p.payment}:${p.rate}:${p.n}:${p.due}`} c={c}/>
     <div className="proof-heading"><h3>每筆錢，都搬到同一個終點 t = {p.n}</h3><p>{p.due ? '期初：存入 t=0、1、…、n−1，每筆多生息一年。' : '期末：存入 t=1、2、…、n，最後一筆尚未生息。'}</p></div>
     <div className="proof-scroll" tabIndex="0" role="region" aria-label="每筆存款的終值，向右捲動查看其餘存款"><div className="proof-deposits">{c.values.map((value, i) => <button className="proof-deposit" key={i} aria-pressed={k === i} onClick={() => setSelected(i)}>
       <strong>${f(value)}</strong><div className="proof-money-track" aria-hidden="true">{value > 0 ? <div className="proof-money-stack" style={{ height: value * scale }}><i className="proof-money-interest" style={{ height: (value - p.payment) * scale }}/><i className="proof-money-principal" style={{ height: p.payment * scale }}/></div> : <span className="proof-zero">0</span>}</div>

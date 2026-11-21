@@ -135,7 +135,7 @@ export function GeometricProof({ c }) {
 }
 
 function UnitGroup({ count, first = count, label }) {
-  return <div className="proof-unit-group" role="img" aria-label={`${label}，${count} 個單位`}><div className="proof-count-grid">{Array.from({ length: count }, (_, i) => <i key={i} className={i < first ? 'proof-fill-base' : 'proof-fill-copy'}/>)}</div></div>;
+  return <div className="proof-unit-group" role="img" aria-label={`${mathNotation(label)}，${count} 個單位`}><div className="proof-count-grid">{Array.from({ length: count }, (_, i) => <i key={i} className={i < first ? 'proof-fill-base' : 'proof-fill-copy'}/>)}</div></div>;
 }
 
 export function FibonacciProof({ c, selected, setSelected }) {

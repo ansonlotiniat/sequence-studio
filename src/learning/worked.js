@@ -1,4 +1,5 @@
 import { arithmeticTerm, calculate, powerSums, recurrence } from '../math.js';
+import { superscript } from '../visualizations/mathNotation.js';
 
 const display = x => String(Number(x.toPrecision(10)));
 const group = x => `(${display(x)})`;
@@ -37,12 +38,12 @@ export function workedComputation(id, input) {
     case 'geometric': {
       const ratio = `(${r})`;
       const finite = r === 1 ? `r=1，直接把 ${n} 個 ${display(a)} 相加。` :
-        `有限和：${display(a)}×[1−${ratio}^${n}]÷[1−${ratio}] ≈ ${display(c.sum)}。`;
+        `有限和：${display(a)}×[1−${ratio}${superscript(n)}]÷[1−${ratio}] ≈ ${display(c.sum)}。`;
       const infinite = a === 0 ? '首項為零，所有項及部分和一直是零。' : Math.abs(r) < 1 ?
         `|r|<1，無窮和為 ${display(a)}÷[1−${ratio}] ≈ ${display(a / (1 - r))}；無窮和減目前部分和 ≈ ${display(a * r ** n / (1 - r))}。` :
         '|r|≥1，且首項不是零；項不趨近零，因此部分和不收斂。';
       return [n === 1 ? `第 1 項直接是 ${display(a)}，不用乘，也不用計算 0⁰。` :
-        `共乘 ${n - 1} 次：aₙ = ${display(a)}×${ratio}^${n - 1} ≈ ${display(c.last)}。`,
+        `共乘 ${n - 1} 次：aₙ = ${display(a)}×${ratio}${superscript(n - 1)} ≈ ${display(c.last)}。`,
         `把各項相加：${add(c.values)} ≈ ${display(c.sum)}。`, finite, infinite];
     }
     case 'triangular': {
@@ -70,10 +71,10 @@ export function workedComputation(id, input) {
         `以第 ${n} 年年末為終點；利率 ${rate}% = ${display(rate / 100)}，每年乘 ${display(1 + rate / 100)}。`,
         ...c.values.map((value, i) => {
           const t = i + (due ? 0 : 1);
-          return `第 ${i + 1} 筆在 t=${t} 存入，生息 ${n}−${t}=${n - t} 年：MOP ${payment}×${group(1 + rate / 100)}^${n - t} ≈ MOP ${display(value)}。`;
+          return `第 ${i + 1} 筆在 t=${t} 存入，生息 ${n}−${t}=${n - t} 年：MOP ${payment}×${group(1 + rate / 100)}${superscript(n - t)} ≈ MOP ${display(value)}。`;
         }),
         rate === 0 ? `零利率：終值＝${n}×${payment}＝MOP ${display(c.principal)}，利息為零。` :
-          `用等比和核對：[(1+${display(rate / 100)})^${n}−1]÷${display(rate / 100)}${due ? `，期初再乘 (1+${display(rate / 100)})` : ''}，得到每 MOP 1 的終值係數 ≈ ${display(factor)}。總終值 ≈ MOP ${display(c.sum)}；減去本金 MOP ${display(c.principal)}，利息 ≈ MOP ${display(c.sum - c.principal)}。`,
+          `用等比和核對：[(1+${display(rate / 100)})${superscript(n)}−1]÷${display(rate / 100)}${due ? `，期初再乘 (1+${display(rate / 100)})` : ''}，得到每 MOP 1 的終值係數 ≈ ${display(factor)}。總終值 ≈ MOP ${display(c.sum)}；減去本金 MOP ${display(c.principal)}，利息 ≈ MOP ${display(c.sum - c.principal)}。`,
         `反向：若以 MOP ${input.target} 為目標，所需每筆存款＝目標÷終值係數 ≈ MOP ${display(input.target / factor)}（計算時不先四捨五入係數）。`,
       ];
     }

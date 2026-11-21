@@ -3,8 +3,8 @@ import { ArrowRight, Lightbulb } from 'lucide-react';
 import { sequenceBasics, teaching } from './content.js';
 import { lessonDepth } from './depth.js';
 import WorkedLab from './WorkedLab.jsx';
+import { SquareSumLesson } from '../visualizations/LearningModels.jsx';
 
-const { SquareSumLesson } = import.meta.glob('../visualizations/LearningModels.jsx', { eager: true })['../visualizations/LearningModels.jsx'] ?? {};
 const stages = [['lesson-ready', '準備'], ['lesson-predict', '實驗'], ['lesson-worked', '演算'],
   ['explanation', '推導'], ['lesson-exit', '回顧']];
 const checkIns = {
@@ -58,7 +58,7 @@ export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset
   const [question, options, expected, explanation] = lesson.readiness;
   const [checkQuestion, correct, distractor, checkReason] = checkIns[id];
   const checkOptions = expected === 0 ? [distractor, correct] : [correct, distractor];
-  const directSquareMission = id === 'square' && SquareSumLesson && squareMission;
+  const directSquareMission = id === 'square' && squareMission;
   const completed = [ready === expected, observing && (!directSquareMission || squareCheck?.correct), worked, check === correct, reviewed];
   const completedCount = completed.filter(Boolean).length;
   function showPreset(preset, apply) {

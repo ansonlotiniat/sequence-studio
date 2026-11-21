@@ -63,3 +63,24 @@ test('new skills reopen completed practice without discarding earned skill evide
   assert.equal(chapter.practice.skill, 3);
   assert.equal(practiceItem(id, chapter.practice).label, '解釋立方和的抵消');
 });
+
+test('an unfinished review keeps prior mastery separate from this review’s answers', () => {
+  const id = 'square', exam = startPractice(id);
+  const independent = exam.variants.map((_, i) => i);
+  const passed = recordPractice({}, { ...exam, independent, finished: true }, 100);
+  const review = startPractice(id, defaults, passed.practice);
+  assert.deepEqual(review.mastered, independent);
+  assert.deepEqual(review.independent, []);
+  const chapter = recordPractice(passed, { ...review, independent: [0] }, 150);
+  const saved = { version: 1, location: { id, page: 'quiz' }, experiments: {}, chapters: { square: chapter } };
+  const load = () => readStudy({ getItem: () => JSON.stringify(saved) }).chapters.square;
+  assert.deepEqual(load(), chapter);
+
+  const { mastered, ...oldReview } = chapter.practice;
+  saved.chapters.square = { ...chapter, practice: { ...oldReview, variants: [0, 0, 0] } };
+  const expanded = load();
+  assert.deepEqual(expanded.practice.mastered, [0, 1, 2]);
+  assert.deepEqual(expanded.practice.independent, [0, 1, 2]);
+  assert.equal(expanded.practice.skill, 3);
+  assert.equal(expanded.passedAt, undefined);
+});

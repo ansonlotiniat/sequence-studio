@@ -25,12 +25,22 @@ export function readStudy(storage) {
       for (const [id, chapter] of Object.entries(chapters)) {
         const practice = chapter.practice;
         const count = skills[id]?.length;
-        if (!count || !practice?.variants || practice.variants.length >= count) continue;
+        if (!count || !practice?.variants) continue;
+        const mastered = practice.mastered ?? (chapter.passedAt ?
+          practice.variants.map((_, i) => i) : []);
+        if (practice.variants.length >= count) {
+          if (chapter.passedAt && !practice.mastered) {
+            chapters[id] = { ...chapter, practice: { ...practice, mastered } };
+          }
+          continue;
+        }
         const { passedAt, reviewAt, ...current } = chapter;
         const variants = Array.from({ length: count }, (_, i) => practice.variants[i] ?? 0);
-        chapters[id] = { ...current, practice: practice.finished ?
-          { ...practice, ...newQuestion(), variants, skill: practice.variants.length, finished: false } :
-          { ...practice, variants } };
+        const independent = [...new Set([...mastered, ...practice.independent])];
+        const skill = variants.findIndex((_, i) => !independent.includes(i));
+        chapters[id] = { ...current, practice: {
+          ...practice, ...newQuestion(), mastered, variants, independent, skill, finished: false,
+        } };
       }
       return { ...stored, chapters };
     }
@@ -48,6 +58,7 @@ export function startPractice(id, params = defaults, previous = null) {
   return {
     params: normalize(params), skill: 0, variants: skills[id].map((_, i) => previous ? previous.variants[i] + 1 : 0),
     independent: [], practiced: [], finished: false, ...newQuestion(),
+    ...(previous && { mastered: previous.finished ? previous.independent : previous.mastered ?? [] }),
   };
 }
 
@@ -79,7 +90,7 @@ export function nextPractice(id, practice, retry = false) {
 export function recordPractice(chapter, practice, now = Date.now()) {
   const justFinished = practice.finished && !chapter.practice?.finished;
   return {
-    ...chapter, explored: true, practice,
+    ...chapter, explored: true, practice: justFinished ? { ...practice, mastered: practice.independent } : practice,
     ...(justFinished ? { passedAt: now, reviewAt: now + (chapter.passedAt ? 3 : 1) * day } : {}),
   };
 }

@@ -292,5 +292,4 @@ main { max-width: 1400px; padding: 36px 36px 24px; }
   .lesson-heading h1 > span { display: none; }
   .section-tabs > button { font-size: 12px; }
   .controls-panel .extra-controls { gap: 6px; }
-  .number-control input { width: 65px; }
 }

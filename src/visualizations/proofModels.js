@@ -44,7 +44,7 @@ export function visualFormat(value) {
 }
 
 export function proofNumber(value, operandScale = 0) {
-  if (value === 0 || (operandScale > 0 && Math.abs(value) / operandScale < 1e-9)) return 0;
+  if (value === 0 || (operandScale > 0 && Math.abs(value) / operandScale < 1e-12)) return 0;
   return Number(value.toPrecision(10));
 }
 

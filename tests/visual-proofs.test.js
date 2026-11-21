@@ -15,16 +15,28 @@ test('arithmetic display equations share decimal-safe operands without changing 
   assert.equal(display.sum, 0);
   assert.equal(proofFormat(display.last), '-1');
   assert.equal(proofFormat(display.sum), '0');
-  const nearZero = proofCalculation('arithmetic', calculate('arithmetic', { a: 1, d: -0.1818181816, n: 12 }));
-  assert.equal(nearZero.pairTotal, 0);
-  assert.equal(nearZero.sum, 0);
-  assert.equal(nearZero.doubleSum, 0);
   for (const [a, d, n] of [[0.3, -0.1, 7], [-0.3, 0.1, 7], [0.1, 0.1, 3], [1e-20, 0, 12]]) {
     const shown = proofCalculation('arithmetic', calculate('arithmetic', { a, d, n }));
     assert.equal(shown.pairTotal, proofNumber(arithmeticPairTotal(a, d, n)));
     assert.equal(shown.sum, proofNumber(arithmeticPartialSum(a, d, n)));
     assert.equal(shown.doubleSum, proofNumber(shown.pairTotal * n));
   }
+});
+
+test('display cancellation preserves genuine small differences above floating-point noise', () => {
+  for (const [d, n, last, pair, sum] of [
+    [-1.999999999, 2, -0.999999999, 1e-9, 1e-9],
+    [-0.1818181816, 12, -0.9999999976, 2.4e-9, 1.44e-8],
+  ]) {
+    const display = proofCalculation('arithmetic', calculate('arithmetic', { a: 1, d, n }));
+    assert.equal(display.last, last);
+    assert.equal(display.pairTotal, pair);
+    assert.equal(display.sum, sum);
+    assert.equal(display.doubleSum, 2 * sum);
+    assert.equal(display.partialSums.at(-1), display.sum);
+  }
+  assert.equal(proofNumber(1e-9, 4), 1e-9);
+  assert.equal(proofNumber(2e-16, 4), 0);
 });
 
 test('geometric display sums, tails, limits and shifted terms trim floating noise', () => {

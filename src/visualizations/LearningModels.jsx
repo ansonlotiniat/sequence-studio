@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { editSquareWorkspace } from '../learning/guided.js';
 import { calculate } from '../math.js';
 import { annuityLedger, squareSumCells, squareSumTower, visualFormat as f } from './proofModels.js';
 import { subscript } from './mathNotation.js';
@@ -28,27 +29,30 @@ function SquareTower({ placed, n }) {
 }
 
 // Each square keeps its unit size when its cells move into the counting tray.
-export function SquareSumExplorer({ c, setSelected = () => {}, onParams, onComplete }) {
+export function SquareSumExplorer({ c, setSelected = () => {}, onParams, onComplete, workspace, onWorkspaceChange }) {
   const n = c.params.n;
   const index = subscript(n);
-  const [placed, setPlaced] = useState([]);
-  const [answers, setAnswers] = useState({ term: '', sum: '' });
-  const [checked, setChecked] = useState(false);
-  const [representation, setRepresentation] = useState('tower');
+  const [localWorkspace, setLocalWorkspace] = useState({});
+  const { placed = [], answers = { term: '', sum: '' }, checked = false, representation = 'tower' } =
+    onWorkspaceChange ? workspace ?? {} : localWorkspace;
+  const update = onWorkspaceChange ?? setLocalWorkspace;
   const cells = squareSumCells(placed);
   const complete = placed.length === n;
   const missing = Array.from({ length: n }, (_, i) => i + 1).filter(k => !placed.includes(k));
   function toggle(term) {
-    setPlaced(current => current.includes(term) ? current.filter(k => k !== term) : [...current, term]);
+    const next = placed.includes(term) ? placed.filter(k => k !== term) : [...placed, term];
+    invalidate({ placed: next });
     setSelected(term - 1);
-    setChecked(false);
+  }
+  function invalidate(patch) {
+    update(current => editSquareWorkspace(current, patch));
     onComplete?.({ correct: false });
   }
   function check() {
-    setChecked(true);
+    update(current => ({ ...current, checked: true }));
     onComplete?.({ correct: complete && answers.term.trim() !== '' && answers.sum.trim() !== '' && Number(answers.term) === c.last && Number(answers.sum) === c.sum });
   }
-  function edit(key, value) { setAnswers(current => ({ ...current, [key]: value })); setChecked(false); onComplete?.({ correct: false }); }
+  function edit(key, value) { invalidate({ answers: { ...answers, [key]: value } }); }
   return <div className="square-workbench" data-proof="square-sum-workbench">
     <div className="proof-heading"><h3>把完整的正方形，放進總和裡</h3><p>第 {n} 項只有一個 {n}×{n} 正方形；前 {n} 項的和，要把每個正方形都算一次。</p></div>
     {n !== 3 && onParams && <button className="proof-action" onClick={() => onParams({ n: 3 })}>先用 1²＋2²＋3² 試一次</button>}
@@ -64,7 +68,7 @@ export function SquareSumExplorer({ c, setSelected = () => {}, onParams, onCompl
     <div className="learning-step-label"><b>2</b><span>同一批單位，可以平面點算，也可以逐層堆疊</span></div>
     <div className="square-counting-tray" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const term = Number(e.dataTransfer.getData('text/plain')); if (Number.isInteger(term) && term >= 1 && term <= n && !placed.includes(term)) toggle(term); }}>
       <div className="square-tray-heading"><strong>{complete ? `前 ${n} 項的和 S${index}` : '已放入的單位小計'}</strong><output aria-live="polite">{cells.length} {representation === 'tower' ? '個方塊' : '格'}</output></div>
-      <div className="square-model-switch" role="group" aria-label="平方和的視覺表示"><button aria-pressed={representation === 'tower'} onClick={() => setRepresentation('tower')}>立體：堆成平方塔</button><button aria-pressed={representation === 'flat'} onClick={() => setRepresentation('flat')}>平面：十格一排點算</button></div>
+      <div className="square-model-switch" role="group" aria-label="平方和的視覺表示"><button aria-pressed={representation === 'tower'} onClick={() => update(current => ({ ...current, representation: 'tower' }))}>立體：堆成平方塔</button><button aria-pressed={representation === 'flat'} onClick={() => update(current => ({ ...current, representation: 'flat' }))}>平面：十格一排點算</button></div>
       {representation === 'tower' ? <><SquareTower placed={placed} n={n}/><p className="proof-scale-note">延伸一步：把每格加高 1，變成單位立方體。{cells.length} 平方單位對應 {cells.length} 立方單位；數字相同，面積與體積的意義不同。</p><div className="tower-layer-legend">{placed.slice().sort((a,b) => b-a).map(k => <span key={k}><i style={{ background: color(k) }}/>{k}×{k} 的一層：{k*k} 個</span>)}</div></> : <>
       <div className="proof-scroll" role="region" tabIndex="0" aria-label="每排十格的計數盤，每格面積與上方正方形相同">
         <svg className="square-counting-svg" width="216" height={Math.max(74, Math.ceil(cells.length / 10) * 20 + 28)} role="img" aria-label={`每排十格，共 ${Math.floor(cells.length / 10)} 整排及 ${cells.length % 10} 格，總共 ${cells.length} 格`}>
@@ -75,7 +79,7 @@ export function SquareSumExplorer({ c, setSelected = () => {}, onParams, onCompl
       <p className="tray-counting-caption">{Math.floor(cells.length / 10)} 整排 × 10 ＋ {cells.length % 10} 格 = {cells.length} 格</p>
       <p className="proof-scale-note">每格都是 1 平方單位；十格一排只是方便點算，不是平方和公式。</p>
       </>}
-      <div className="learning-inline-actions"><button className="proof-action" disabled={!missing.length} onClick={() => toggle(missing[0])}>放入下一個正方形</button><button className="proof-action" disabled={!placed.length} onClick={() => { setPlaced([]); setChecked(false); onComplete?.({ correct: false }); }}>全部取回</button></div>
+      <div className="learning-inline-actions"><button className="proof-action" disabled={!missing.length} onClick={() => toggle(missing[0])}>放入下一個正方形</button><button className="proof-action" disabled={!placed.length} onClick={() => invalidate({ placed: [] })}>全部取回</button></div>
       <p className="proof-reason" role="status">{complete ? `${placed.slice().sort((a, b) => a - b).map(k => `${k}²`).join(' ＋ ')} = ${c.sum}。所有完整正方形各計一次，現在才是 S${index}。` : `還缺第 ${missing.join('、')} 個正方形；目前的小計不是 S${index}。`}</p>
     </div>
     <div className="learning-step-label"><b>3</b><span>不用背符號，指出它在數哪一幅圖</span></div>
@@ -88,9 +92,10 @@ export function SquareSumExplorer({ c, setSelected = () => {}, onParams, onCompl
   </div>;
 }
 
-export function SquareSumLesson({ n = 3, onComplete }) {
+export function SquareSumLesson({ n = 3, onComplete, workspace, onWorkspaceChange }) {
   const c = calculate('square', { n });
-  return <div className="lab-visualizations embedded-square-lesson"><SquareSumExplorer key={c.params.n} c={c} onComplete={onComplete}/></div>;
+  return <div className="lab-visualizations embedded-square-lesson"><SquareSumExplorer key={c.params.n} c={c} onComplete={onComplete}
+    workspace={workspace} onWorkspaceChange={onWorkspaceChange}/></div>;
 }
 
 export function AnnuityTimeline({ c }) {

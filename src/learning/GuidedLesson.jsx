@@ -11,11 +11,14 @@ export function SequenceBasics() {
 
 function Step({ step }) {
   if (typeof step === 'string') return step;
-  return <div className="derivation-table" tabIndex="0" role="region" aria-label={step.label}>
-    <table><caption>{step.label}</caption><tbody>{step.rows.map(([name, ...values]) =>
+  return <figure className="derivation-table">
+    <figcaption>{step.label}<span>左右捲動查看各欄</span></figcaption>
+    <div className="derivation-scroll" tabIndex="0" role="region" aria-label={`${step.label}，可左右捲動`}>
+    <table aria-label={step.label}><tbody>{step.rows.map(([name, ...values]) =>
       <tr key={name}><th scope="row">{name}</th>{values.map((value, i) => <td key={i}>{value}</td>)}</tr>)}
     </tbody></table>
-  </div>;
+    </div>
+  </figure>;
 }
 
 export default function GuidedLesson({ id, onPreset, onQuiz, children }) {

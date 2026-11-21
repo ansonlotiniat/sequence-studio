@@ -8,7 +8,7 @@ export const modes = {
 };
 
 export const pageNames = { path: '學習路徑', learn: '理解與推導', lab: '互動實驗室', quiz: '小試身手' };
-export const viewNames = { shape: '幾何視角', graph: '數列圖表', sum: '累積求和' };
+export const viewNames = { shape: '視覺證明', graph: '數列圖表', sum: '累積求和' };
 export const parameterNames = { n: '項數', a: '首項', d: '公差', r: '公比', payment: '每年存入', rate: '年利率', due: '存入時點' };
 const extras = { arithmetic: ['a', 'd'], geometric: ['a', 'r'], annuity: ['payment', 'rate', 'due'] };
 
@@ -64,7 +64,9 @@ export function calculatedFacts(lesson, context) {
   const facts = { values, last, sum };
   if (context.selected) {
     const prefix = values.slice(0, context.selected);
-    facts.selected = { term: context.selected, value: prefix.at(-1), sum: prefix.reduce((a, b) => a + b, 0) };
+    const selectedSum = lesson === 'annuity' ? prefix.reduce((a, b) => a + b, 0) :
+      calculate(lesson, { ...context.params, n: context.selected }).sum;
+    facts.selected = { term: context.selected, value: prefix.at(-1), sum: selectedSum };
   }
   if (lesson === 'square') facts.newTiles = 2 * (context.selected ?? n) - 1;
   if (lesson === 'geometric') facts.sumRule = r === 1 ? 'Sₙ = n × a₁；1−r=0，不可除以零。' : 'Sₙ = a₁(1−rⁿ)/(1−r)。';

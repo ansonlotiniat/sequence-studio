@@ -57,7 +57,13 @@ export default function Layout({ study, lesson, navigate, openTutor, chatOpen, c
   const go = (page, id) => { navigate(page, id); setSidebar(false); };
   const askTutor = () => { setSidebar(false); openTutor(); };
   return <div className={`app-shell ${chatOpen ? 'tutor-open' : ''}`}>
-    <a className="skip-link" href="#learning-content">跳到學習內容</a>
+    <a className="skip-link" href="#learning-content" onClick={event => {
+      // Keep the hash route and experiment state while moving past navigation.
+      event.preventDefault();
+      const content = document.getElementById('learning-content');
+      content?.focus({ preventScroll: true });
+      content?.scrollIntoView({ block: 'start' });
+    }}>跳到學習內容</a>
     <aside ref={sidebarRef} id="course-navigation" aria-label="課程導覽" role={sidebar && mobile ? 'dialog' : undefined} aria-modal={sidebar && mobile ? true : undefined} inert={(mobile && !sidebar) || (chatOpen && !docked)} className={`sidebar ${sidebar ? 'is-open' : ''}`}>
       <a className="brand" href={`#/${id}/path`} onClick={e=>{e.preventDefault();go('path');}}><img src="./icon.svg" alt=""/><span>序<span className="brand-en">sequence studio</span></span></a>
       <button className="mobile-close icon-button" aria-label="關閉選單" onClick={()=>setSidebar(false)}><X size={20}/></button>

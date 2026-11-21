@@ -89,6 +89,15 @@ export function squareComparisonReply({ values, last, sum, layerIncrements }) {
   ].join('\n\n');
 }
 
+export function squareGroupingHint({ values }, { page, view }, term) {
+  const earlier = values.slice(0, term - 1);
+  const subtotal = earlier.reduce((total, value) => total + value, 0);
+  const place = view !== 'sum' ? '切到「累積求和」後' : page === 'learn' ? '在平方和拼圖中' : '在「累積求和」';
+  const group = term === 2 ? '先放入 1×1 的正方形，保留這 1 格' :
+    `先放入${term === 3 ? ' 1×1 和 2×2 ' : `前 ${term - 1} 個`}完整正方形，合成一組共 ${subtotal} 格`;
+  return `${place}，只數前 ${term} 個完整正方形。${group}。再看第 ${term} 個：它有 ${term} 排，每排 ${term} 格。你會寫甚麼算式，把原來的格數和新放入的整個正方形合起來？`;
+}
+
 export function factLabel(lesson, context, facts) {
   const n = context.params.n;
   if (lesson === 'annuity') {

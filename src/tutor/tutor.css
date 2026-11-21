@@ -7,6 +7,15 @@
 }
 .chat-context summary { cursor: pointer; }
 .chat-context details p { margin: .3rem 0 0; }
+.tutor-look-at-figure,
+.tutor-resume { min-height: 44px; }
+.tutor-look-at-figure { justify-self: start; }
+.tutor-resume { margin-bottom: .5rem; }
+#experiment-figure.lesson-card { scroll-margin-top: 84px; }
+@media (min-width: 1280px) {
+  .outline-button.tutor-look-at-figure,
+  .outline-button.tutor-resume { display: none; }
+}
 .chat-panel .chat-message,
 .chat-panel .chat-form textarea { font-size: .875rem; }
 .chat-panel .chat-privacy { color: #4f6554; font-size: .6875rem; }

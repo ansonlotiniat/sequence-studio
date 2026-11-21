@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, Lightbulb, Send, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Grid2X2, Lightbulb, Send, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { buildChatHistory } from '../chat.js';
 import { teaching } from '../learning/content.js';
 import { calculatedFacts, contextKey, experimentAction, factLabel, labQuestion, modes,
@@ -16,7 +16,7 @@ async function fetchTutor(payload, signal) {
   return data;
 }
 
-export default function Tutor({ chatOpen, setChatOpen, lesson, context, practiceCoach, onApplyAction }) {
+export default function Tutor({ chatOpen, setChatOpen, lesson, context, practiceCoach, onApplyAction, onLookAtFigure }) {
   const { id, title } = lesson;
   const { page, params } = context;
   const scope = page === 'path' ? 'path' : id;
@@ -130,6 +130,8 @@ export default function Tutor({ chatOpen, setChatOpen, lesson, context, practice
       </div>
       <div className="chat-context"><div><strong>{page === 'path' ? '學習路徑' : title}</strong>{page !== 'path' && <span> · {label}</span>}</div>
         {facts && <details><summary>核對實驗數據（本站計算）</summary><p>{factLabel(id, context, facts)}</p></details>}
+        {params && <button type="button" className="outline-button tutor-look-at-figure" aria-controls="experiment-figure"
+          onClick={onLookAtFigure}><Grid2X2 size={16} aria-hidden="true"/>回到圖形</button>}
       </div>
       {page === 'quiz' ? <div className="chat-messages tutor-practice" ref={log}>
         <div className="chat-message assistant">

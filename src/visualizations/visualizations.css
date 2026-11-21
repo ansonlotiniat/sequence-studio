@@ -93,7 +93,8 @@
 .lab-visualizations .proof-sum-shapes small { font-size: 12px; }
 .lab-visualizations .proof-fib-sum { border-top: 1px solid #dbe3d4; padding-top: 18px; margin-top: 20px; font-size: 14px; line-height: 1.9; }
 .lab-visualizations .proof-fib-sum h4 { font-size: 14px; }
-.lab-visualizations .proof-telescope { white-space: nowrap; padding: 12px 0; }
+.lab-visualizations .proof-telescope { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0; font-variant-numeric: tabular-nums; }
+.lab-visualizations .proof-telescope > span { white-space: nowrap; }
 .lab-visualizations .visual-playback { border-top: 1px solid #dfe6d7; padding: 18px 20px; background: #fafbf7; }
 .lab-visualizations .visual-playback-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .lab-visualizations .visual-playback button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d6dfcd; border-radius: 7px; background: #fff; color: #426344; }
@@ -198,6 +199,7 @@
 .lab-visualizations .tower-layer-legend i { width: 13px; height: 13px; border-radius: 3px; }
 @keyframes counted-cell-in { from { opacity: .2; } to { opacity: 1; } }
 @media (max-width: 600px) {
+  .lab-visualizations .proof-deposits { display: grid; width: 100%; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
   .lab-visualizations .visual-check-inputs, .lab-visualizations .learning-measures { grid-template-columns: minmax(0, 1fr); }
   .lab-visualizations .square-counting-tray, .lab-visualizations .visual-check, .lab-visualizations .learning-diagram { padding: 12px; }
   .lab-visualizations .square-piece { padding: 9px; }

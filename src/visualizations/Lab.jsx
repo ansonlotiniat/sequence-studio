@@ -64,10 +64,6 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
         <div className="stat-box"><span>{id === 'annuity' ? '共同終點總值 FV' : `第 ${p.n} 項`}{id !== 'annuity' && <i>a<sub>{p.n}</sub></i>}</span><strong>{id === 'annuity' ? '$' : ''}{displayFormat(id === 'annuity' ? c.sum : display.last)}</strong></div>
         <div className="sum-stat"><span>{id === 'annuity' ? '利息佔總值' : `前 ${p.n} 項的和`} <i>{id === 'annuity' ? '' : 'Sₙ'}</i></span><strong>{id === 'annuity' ? `${c.sum === 0 ? 0 : f((c.sum - c.principal) / c.sum * 100)}%` : displayFormat(display.sum)}</strong></div>
       </div>
-      <details className="experiment-notes"><summary>觀察提示與數值解讀</summary>
-      <p>{id === 'square' ? `${p.n} × ${p.n} = ${c.last} 平方單位` : id === 'triangular' ? `第 ${p.n} 個三角形有 ${c.last} 點` : id === 'annuity' ? `本金 $${f(c.principal)} · 利息 $${f(c.sum - c.principal)}` : lesson.formula}</p>
-      <div className="observe-note"><Lightbulb size={18}/><div><strong>觀察後，試著解釋</strong><p>{id === 'square' ? '先區分最後一個正方形與全部正方形；切到 L 形，再解釋新增一圈為甚麼有 2n−1 格。' : id === 'triangular' ? '不用重新逐點數，說明每行為甚麼一樣長、何時要除以 2。' : id === 'arithmetic' ? '若公差為負，倒寫配對為甚麼仍然有相同的和？' : id === 'geometric' ? '指出相減時留下的首尾兩項，並解釋 r=1 時不能做哪一步。' : id === 'fibonacci' ? '指出兩個來源的下標，再說明為甚麼不是上一項乘二。' : '指出最後一筆存款的時間，再說明期初比期末多生息多久。'}</p></div></div>
-      </details>
     </aside>
     <section id="experiment-figure" tabIndex={-1} className="visual-panel" aria-label={`${lesson.title}視覺化`}>
       {tutorResume}
@@ -78,6 +74,10 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
         <button aria-pressed={view === 'graph'} className={view === 'graph' ? 'active' : ''} onClick={() => changeView('graph')}><LineChart size={16}/>數列圖表</button>
       </div>
       <div className="visual-canvas">{view === 'graph' ? <SequenceChart values={c.values} selected={selected} setSelected={choose} domainValues={calculate(id, { ...p, n: 12 }).values} annuityYear={id === 'annuity' ? p.n : null} allowLog={id === 'geometric'}/> : view === 'sum' ? <SumView id={id} c={display} selected={focused} setSelected={choose} onParams={applyParams}/> : <ShapeView id={id} c={display} proof={proof} setProof={setProof} selected={focused} setSelected={choose} onParams={applyParams}/>}</div>
+      <details className="experiment-notes"><summary>觀察提示與數值解讀</summary>
+        <p>{id === 'square' ? `${p.n} × ${p.n} = ${c.last} 平方單位` : id === 'triangular' ? `第 ${p.n} 個三角形有 ${c.last} 點` : id === 'annuity' ? `本金 $${f(c.principal)} · 利息 $${f(c.sum - c.principal)}` : lesson.formula}</p>
+        <div className="observe-note"><Lightbulb size={18}/><div><strong>觀察後，試著解釋</strong><p>{id === 'square' ? '先區分最後一個正方形與全部正方形；切到 L 形，再解釋新增一圈為甚麼有 2n−1 格。' : id === 'triangular' ? '不用重新逐點數，說明每行為甚麼一樣長、何時要除以 2。' : id === 'arithmetic' ? '若公差為負，倒寫配對為甚麼仍然有相同的和？' : id === 'geometric' ? '指出相減時留下的首尾兩項，並解釋 r=1 時不能做哪一步。' : id === 'fibonacci' ? '指出兩個來源的下標，再說明為甚麼不是上一項乘二。' : '指出最後一筆存款的時間，再說明期初比期末多生息多久。'}</p></div></div>
+      </details>
       <div className="visual-playback" aria-label="逐項觀察控制">
         <div className="visual-playback-buttons"><button aria-label="回到上一項" disabled={p.n === 1} onClick={() => update('n', p.n - 1)}><SkipBack size={18}/></button><button className="visual-play" onClick={togglePlayback} aria-label={playing ? '暫停逐項播放' : p.n === 12 ? '從第一項重新播放' : '播放至第十二項'}>{playing ? <Pause size={18}/> : <Play size={18}/>}<span>{playing ? '暫停' : p.n === 12 ? '重播' : '逐項播放'}</span></button><button aria-label="前進到下一項" disabled={p.n === 12} onClick={() => update('n', p.n + 1)}><SkipForward size={18}/></button><button aria-label="重設實驗" onClick={reset}><RotateCcw size={18}/></button><output className="visual-playback-count">n = {p.n} / 12</output></div>
         <div className="visual-playback-settings"><label>每項停留<select aria-label="每項停留時間" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value="800">0.8 秒</option><option value="1600">1.6 秒</option><option value="3000">3 秒</option></select></label><label><input type="checkbox" checked={repeat} onChange={e => setRepeat(e.target.checked)}/>循環播放</label><span>預設到 12 項就停，方便說明觀察</span></div>

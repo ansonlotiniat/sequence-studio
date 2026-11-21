@@ -4,6 +4,7 @@ import { chartDomain, geometricTail, proofCalculation, proofFormat, signedLogSca
 import { ScaleToggle } from './SequencePictures.jsx';
 import { SquareProof, TriangleProof, ArithmeticProof, GeometricProof, FibonacciProof, AnnuityProof } from './ProofScenes.jsx';
 import { SquareSumExplorer } from './LearningModels.jsx';
+import { mathNotation } from './mathNotation.js';
 
 export function ShapeView({ id, c, proof, setProof, selected, setSelected, onParams }) {
   const props = { c, selected, setSelected, onParams };
@@ -81,8 +82,8 @@ export function SumView({ id, c, selected, setSelected, onParams }) {
       <span>a<sub>{i + 1}</sub> = {value}</span><div className="proof-mini-grid" style={{ gridTemplateColumns: `repeat(${i + 1}, 10px)` }} aria-hidden="true">{Array.from({ length: (i + 1) ** 2 }, (_, j) => <i key={j} style={id === 'triangular' && j % (i + 1) > Math.floor(j / (i + 1)) ? { visibility: 'hidden' } : {}}/>)}</div>
       <small>{i < k ? '計入總和' : '尚未計入'}</small>
     </button>)}</div>
-    <div className="proof-equation" role="status">S{k} = {c.values.slice(0, k).map(f).join(' + ')} = {f(sums[k - 1])}</div>
-    <p className="proof-reason">{k === 1 ? '只有一項時，S₁ = a₁ = 1；符號意義不同，數值此時相同。' : `第 ${k} 項 a${k} = ${c.values[k - 1]}；前 ${k} 項和 S${k} = ${sums[k - 1]}，要數所有已計入的完整圖形。`}</p>
+    <div className="proof-equation" role="status">S<sub>{k}</sub> = {c.values.slice(0, k).map(f).join(' + ')} = {f(sums[k - 1])}</div>
+    <p className="proof-reason">{k === 1 ? '只有一項時，S₁ = a₁ = 1；符號意義不同，數值此時相同。' : mathNotation(`第 ${k} 項 a${k} = ${c.values[k - 1]}；前 ${k} 項和 S${k} = ${sums[k - 1]}，要數所有已計入的完整圖形。`)}</p>
   </div>;
   const limit = id === 'geometric' && (c.params.a === 0 || Math.abs(c.params.r) < 1) ? (c.params.a === 0 ? 0 : c.params.a / (1 - c.params.r)) : null;
   const extendedFib = id === 'fibonacci' ? calculate(id, { ...c.params, n: 12 }).values : [];
@@ -92,8 +93,8 @@ export function SumView({ id, c, selected, setSelected, onParams }) {
     <div className="proof-heading"><h3>{id === 'annuity' ? '同一個終點，逐筆加總' : '單項與部分和，分開觀察'}</h3><p>{id === 'annuity' ? `全部以 t=${c.params.n} 估值；橫軸是第 k 筆，不是第 k 年的帳戶結餘。` : '新增一項 aₖ，就是部分和 Sₖ 比 Sₖ₋₁ 改變的量。'}</p></div>
     <SequenceChart values={sums} selected={selected} setSelected={setSelected} cumulative annuityYear={id === 'annuity' ? c.params.n : null}
       domainValues={domainValues} limit={limit}/>
-    <div className="proof-equation">{id === 'annuity' ? `t=${c.params.n} 的 ${k} 筆存款終值小計` : `S${k}`} = {formatSum(sums[k - 1])}</div>
-    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : `極限 S∞ = ${formatSum(limit)}；尾和 S∞ − S${k} = a₁r^${k}/(1−r) = ${formatSum(geometricTail(c.params.a, c.params.r, k))}。虛線是極限，不是第 13 項。`}</p>}
-    {id === 'fibonacci' && <div className="proof-fib-sum"><h4>把遞推式改寫成相鄰兩項的差</h4><div className="proof-scroll" tabIndex="0" role="region" aria-label="斐波那契求和抵消證明"><div className="proof-telescope">{c.values.slice(0, k).map((v, i) => <span key={i}>{i > 0 ? ' + ' : ''}(<b className={i < k - 1 ? 'proof-cancel' : ''}>F{i + 3}</b> − <b className={i > 0 ? 'proof-cancel' : ''}>F{i + 2}</b>)</span>)}</div></div><p>中間的正負項相消，只剩 F{k + 2} − F₂ = {extendedFib[k + 1]} − 1 = {f(sums[k - 1])}。</p></div>}
+    <div className="proof-equation">{id === 'annuity' ? `t=${c.params.n} 的 ${k} 筆存款終值小計` : <>S<sub>{k}</sub></>} = {formatSum(sums[k - 1])}</div>
+    {id === 'geometric' && <p className="proof-reason">{limit === null ? '首項非零且 |r|≥1：沒有收斂的無窮和，但本圖的有限部分和仍有效。' : c.params.a === 0 ? '全零數列：任何公比的部分和都一直是 0。' : mathNotation(`極限 S∞ = ${formatSum(limit)}；尾和 S∞ − S${k} = a₁r^${k}/(1−r) = ${formatSum(geometricTail(c.params.a, c.params.r, k))}。虛線是極限，不是第 13 項。`)}</p>}
+    {id === 'fibonacci' && <div className="proof-fib-sum"><h4>把遞推式改寫成相鄰兩項的差</h4><div className="proof-telescope" role="region" aria-label="斐波那契求和抵消證明">{c.values.slice(0, k).map((v, i) => <span key={i}>{i > 0 ? '+ ' : ''}(<b className={i < k - 1 ? 'proof-cancel' : ''}>F<sub>{i + 3}</sub></b> − <b className={i > 0 ? 'proof-cancel' : ''}>F<sub>{i + 2}</sub></b>)</span>)}</div><p>中間的正負項相消，只剩 F<sub>{k + 2}</sub> − F₂ = {extendedFib[k + 1]} − 1 = {f(sums[k - 1])}。</p></div>}
   </div>;
 }

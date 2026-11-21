@@ -1,0 +1,17 @@
+.comparison { min-width: 0; max-width: 100%; font-variant-numeric: tabular-nums; }
+.comparison-wide { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: auto; }
+.comparison-wide table { border-collapse: separate; border-spacing: 0; min-width: 100%; font-size: 14px; }
+.comparison-wide :is(th, td) { padding: 9px 12px; text-align: center; border-bottom: 1px solid #dce4d5; white-space: nowrap; }
+.comparison-wide th { color: #3b583e; background: #f3f6ee; font-weight: 600; }
+.comparison-wide th:first-child { position: sticky; left: 0; z-index: 1; text-align: left; border-right: 1px solid #dce4d5; }
+.comparison-narrow { display: none; }
+@media (max-width: 767px) {
+  .comparison-wide { display: none; }
+  .comparison .comparison-narrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: 10px; padding: 0; margin: 10px 0; list-style: none; }
+  .comparison .comparison-narrow > li { margin: 0; min-width: 0; border: 1px solid #ccd9c3; border-radius: 8px; overflow: hidden; }
+  .comparison-narrow h5 { margin: 0; padding: 8px; background: #edf4e6; color: #294631; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+  .comparison-narrow dl { margin: 0; font-size: 14px; }
+  .comparison-narrow dl > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; padding: 7px 8px; border-top: 1px solid #dce4d5; }
+  .comparison-narrow dt { color: #425c41; }
+  .comparison-narrow dd { margin: 0; overflow-wrap: anywhere; }
+}

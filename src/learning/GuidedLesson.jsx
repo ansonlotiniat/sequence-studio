@@ -4,6 +4,7 @@ import { sequenceBasics, teaching } from './content.js';
 import { lessonDepth } from './depth.js';
 import WorkedLab from './WorkedLab.jsx';
 import { SquareSumLesson } from '../visualizations/LearningModels.jsx';
+import ComparisonTable from '../ComparisonTable.jsx';
 
 const stages = [['lesson-ready', '準備'], ['lesson-predict', '實驗'], ['lesson-worked', '演算'],
   ['explanation', '推導'], ['lesson-exit', '回顧']];
@@ -28,19 +29,16 @@ function Step({ step }) {
   if (Array.isArray(step)) {
     const [left, right, reason] = step;
     return <>
-      <div className="equation-scroll derivation-scroll" tabIndex="0" role="region" aria-label="算式，可左右捲動">
+      <div className="equation-scroll derivation-scroll" tabIndex="0" role="region" aria-label="推導算式">
         <div className="equation-line"><span>{left}</span><span>＝</span><span>{right}</span></div>
       </div>
       <p className="equation-reason">{reason}</p>
     </>;
   }
   return <figure className="derivation-table">
-    <figcaption>{step.label}<span>左右捲動查看各欄</span></figcaption>
-    <div className="derivation-scroll" tabIndex="0" role="region" aria-label={`${step.label}，可左右捲動`}>
-    <table aria-label={step.label}><tbody>{step.rows.map(([name, ...values]) =>
-      <tr key={name}><th scope="row">{name}</th>{values.map((value, i) => <td key={i}>{value}</td>)}</tr>)}
-    </tbody></table>
-    </div>
+    <figcaption>{step.label}</figcaption>
+    <ComparisonTable label={step.label} corner="欄" columns={step.rows[0].slice(1).map((_, i) => i + 1)}
+      rows={step.rows.map(([label, ...cells]) => ({ label, cells }))}/>
   </figure>;
 }
 

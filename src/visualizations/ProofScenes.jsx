@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { squareTiles, triangleCopies, shiftedTerms, proofFormat, visualFormat as f } from './proofModels.js';
 import { ArithmeticPicture, GeometricPicture } from './SequencePictures.jsx';
 import { SquareSumExplorer, AnnuityTimeline } from './LearningModels.jsx';
+import ComparisonTable from '../ComparisonTable.jsx';
+import { mathNotation } from './mathNotation.js';
 
 export function Legend({ items }) {
-  return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{text}</li>)}</ul>;
+  return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{mathNotation(text)}</li>)}</ul>;
 }
 
 export function TermPicker({ values, selected, onSelect, prefix = 'a', sources = false, formatValue = f }) {
@@ -14,7 +16,7 @@ export function TermPicker({ values, selected, onSelect, prefix = 'a', sources =
   </button>)}</div>;
 }
 
-function Equation({ children }) { return <div className="proof-equation" role="status">{children}</div>; }
+function Equation({ children }) { return <div className="proof-equation" role="status">{React.Children.map(children, child => typeof child === 'string' ? mathNotation(child) : child)}</div>; }
 
 export function SquareProof(props) {
   const [mode, setMode] = useState('sum');
@@ -99,13 +101,13 @@ export function ArithmeticProof({ c, selected, setSelected }) {
     <h4>數值核對</h4>
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected} formatValue={f}/>
-    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : `a${k + 1} − a${k} = d；本次公差 d = ${f(p.d)}`}</p>
+    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : mathNotation(`a${k + 1} − a${k} = d；本次公差 d = ${f(p.d)}`)}</p>
     <button className="proof-action proof-primary" aria-expanded={paired} onClick={() => setPaired(!paired)}>{paired ? '收起配對結果，再預測一次' : '倒寫配對，檢查每對的和'}</button>
-    <div className="proof-scroll" tabIndex="0" role="region" aria-label="正寫與倒寫配對表"><table className="proof-table"><thead><tr><th scope="col">位置</th>{values.map((_, i) => <th scope="col" key={i}>{i + 1}</th>)}</tr></thead><tbody>
-      <tr><th scope="row">正寫 Sₙ</th>{values.map((v, i) => <td key={i} className={i === k ? 'source-a' : ''}>{f(v)}</td>)}</tr>
-      <tr><th scope="row">倒寫 Sₙ</th>{values.map((_, i) => <td key={i} className={i === k ? 'source-b' : ''}>{f(values[p.n - i - 1])}</td>)}</tr>
-      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((_, i) => <td key={i}>{f(pairTotal)}</td>)}</tr>}
-    </tbody></table></div>
+    <ComparisonTable label="正寫與倒寫配對表" columns={values.map((_, i) => i + 1)} rows={[
+      { label: '正寫 Sₙ', cells: values.map((v, i) => <span className={i === k ? 'source-a' : ''}>{f(v)}</span>) },
+      { label: '倒寫 Sₙ', cells: values.map((_, i) => <span className={i === k ? 'source-b' : ''}>{f(values[p.n - i - 1])}</span>) },
+      ...(paired ? [{ label: '每對相加', className: 'proof-total-row', cells: values.map(() => f(pairTotal)) }] : []),
+    ]}/>
     <Legend items={[[ 'base', '正寫的一份總和' ], [ 'copy', '倒寫的另一份總和' ]]}/>
     <Equation>{paired ? decimal ? `2S${p.n} = ${p.n}(a₁ + a${p.n})；代入目前參數：S${p.n} ≈ ${f(sum)}` : `2S${p.n} = ${p.n} × ${f(pairTotal)} = ${f(c.doubleSum)}；S${p.n} = ${f(sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
     <p className="proof-scale-note">顯示值最多保留 10 位有效數字，略去浮點誤差；原始輸入與計算不變。恆等式以符號為準。</p>
@@ -120,11 +122,11 @@ export function GeometricProof({ c }) {
     <GeometricPicture key={JSON.stringify(p)} c={c}/>
     <h4>錯位相減數值核對</h4>
     <div className="proof-heading"><h3>乘一次，再把同一項對齊</h3><p>先找兩行相同的位置：相減後，哪些項沒有對手？</p></div>
-    <div className="proof-scroll" tabIndex="0" role="region" aria-label="等比數列錯位相減表"><table className="proof-table"><thead><tr><th scope="col">次方</th>{columns.map((_, i) => <th scope="col" key={i}>{i === 0 ? 'a₁' : `a₁r${i === 1 ? '' : `^${i}`}`}</th>)}</tr></thead><tbody>
-      <tr><th scope="row">Sₙ</th>{columns.map((v, i) => <td className={reveal && i > 0 && i < p.n ? 'proof-cancel' : 'source-a'} key={i}>{i < p.n ? f(v.original) : '—'}</td>)}</tr>
-      <tr><th scope="row">rSₙ</th>{columns.map((v, i) => <td className={reveal && i > 0 && i < p.n ? 'proof-cancel' : 'source-b'} key={i}>{i > 0 ? f(v.shifted) : '—'}</td>)}</tr>
-      {reveal && <tr className="proof-total-row"><th scope="row">上行 − 下行</th>{columns.map((v, i) => <td key={i}>{f(v.difference)}</td>)}</tr>}
-    </tbody></table></div>
+    <ComparisonTable label="等比數列錯位相減表" corner="次方" columns={columns.map((_, i) => mathNotation(i === 0 ? 'a₁' : `a₁r${i === 1 ? '' : `^${i}`}`))} rows={[
+      { label: 'Sₙ', cells: columns.map((v, i) => <span className={reveal && i > 0 && i < p.n ? 'proof-cancel' : 'source-a'}>{i < p.n ? f(v.original) : '—'}</span>) },
+      { label: 'rSₙ', cells: columns.map((v, i) => <span className={reveal && i > 0 && i < p.n ? 'proof-cancel' : 'source-b'}>{i > 0 ? f(v.shifted) : '—'}</span>) },
+      ...(reveal ? [{ label: '上行 − 下行', className: 'proof-total-row', cells: columns.map(v => f(v.difference)) }] : []),
+    ]}/>
     <button className="proof-action proof-primary" aria-expanded={reveal} onClick={() => setReveal(!reveal)}>{reveal ? '還原兩行，重新找可抵消的項' : '相減：劃掉中間相同的項'}</button>
     <Equation>{p.r === 1 ? `r = 1：不能除以 1−r；S${p.n} = ${p.n} × ${f(p.a)} = ${f(c.sum)}` : `(1 − (${f(p.r)})) S${p.n} = ${f(p.a)} − (${f(c.last * p.r)})；S${p.n} = ${f(c.sum)}`}</Equation>
     <p className="proof-reason">{p.a === 0 ? '首項為 0，所有項和部分和都是 0；任何公比都收斂至 0，不必做 0÷0。' : p.r === 0 ? 'r = 0：第一項後全是 0，有限和與無窮和都等於首項。' : Math.abs(p.r) < 1 ? '切到「累積求和」比較部分和與極限。項趨近 0，不等於有限次相加已到達極限。' : '非零首項且 |r|≥1，部分和不收斂；有限和仍然能逐項計算。'}</p>
@@ -143,11 +145,11 @@ export function FibonacciProof({ c, selected, setSelected }) {
   return <div className="proof-scene" data-proof="fibonacci">
     <div className="proof-heading"><h3>把兩個來源，真的接成下一項</h3><p>選一項；用下標和顏色同時追蹤來源，不是把上一項翻倍。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected} prefix="F" sources/>
-    {k < 2 ? <><Equation>F{k + 1} = 1（給定的初始條件）</Equation><p className="proof-reason">F₁ = F₂ = 1 是起點，不是由前面兩項算出來的。增加至 3 項後，才能第一次使用遞推規則。</p></> : <>
+    {k < 2 ? <><Equation>F<sub>{k + 1}</sub> = 1（給定的初始條件）</Equation><p className="proof-reason">F₁ = F₂ = 1 是起點，不是由前面兩項算出來的。增加至 3 項後，才能第一次使用遞推規則。</p></> : <>
       <p className="proof-reason" role="status">{joined ? `第 2／2 步：新項保留 ${values[k - 2]} 個綠格和 ${values[k - 1]} 個藍格，沒有額外增加單位。` : '第 1／2 步：先看兩個來源，預測合起來有幾格；不是把藍色那一組翻倍。'}</p>
-      <div className="proof-fib-build"><div><h4>來源 A · F{k - 1} = {values[k - 2]}</h4><UnitGroup count={values[k - 2]} label={`F${k - 1}`}/></div><b aria-hidden="true">＋</b><div><h4>來源 B · F{k} = {values[k - 1]}</h4><UnitGroup count={values[k - 1]} first={0} label={`F${k}`}/></div>{joined && <><b aria-hidden="true">＝</b><div><h4>新項 · F{k + 1} = {values[k]}</h4><UnitGroup count={values[k]} first={values[k - 2]} label={`F${k + 1}`}/></div></>}</div>
+      <div className="proof-fib-build"><div><h4>來源 A · F<sub>{k - 1}</sub> = {values[k - 2]}</h4><UnitGroup count={values[k - 2]} label={`F${k - 1}`}/></div><b aria-hidden="true">＋</b><div><h4>來源 B · F<sub>{k}</sub> = {values[k - 1]}</h4><UnitGroup count={values[k - 1]} first={0} label={`F${k}`}/></div>{joined && <><b aria-hidden="true">＝</b><div><h4>新項 · F<sub>{k + 1}</sub> = {values[k]}</h4><UnitGroup count={values[k]} first={values[k - 2]} label={`F${k + 1}`}/></div></>}</div>
       <button className="proof-action proof-primary" aria-pressed={joined} onClick={() => setJoined(!joined)}>{joined ? '分回兩個來源，再預測' : '把兩組接起來，檢查預測'}</button>
-      {joined && <Equation>F{k + 1} = F{k - 1} + F{k} = {values[k - 2]} + {values[k - 1]} = {values[k]}</Equation>}
+      {joined && <Equation>F<sub>{k + 1}</sub> = F<sub>{k - 1}</sub> + F<sub>{k}</sub> = {values[k - 2]} + {values[k - 1]} = {values[k]}</Equation>}
     </>}
     <Legend items={[[ 'base', '來源 A：前兩項中的較早一項' ], [ 'copy', '來源 B：緊接的一項' ]]}/>
   </div>;
@@ -166,7 +168,7 @@ export function AnnuityProof({ c, selected, setSelected }) {
     </button>)}</div></div>
     <Legend items={[[ 'base', `每筆本金 $${f(p.payment)}` ], [ 'new', '到共同終點的利息' ]]}/>
     <div className="proof-timeline">第 {k + 1} 筆：t = {k + (p.due ? 0 : 1)} 存入 <span aria-hidden="true">→</span> 生息 {years} 年 <span aria-hidden="true">→</span> t = {p.n} 估值</div>
-    <Equation>${f(p.payment)} × (1 + {p.rate}%)^{years} = ${f(c.values[k])}</Equation>
+    <Equation>${f(p.payment)} × (1 + {p.rate}%)<sup>{years}</sup> = ${f(c.values[k])}</Equation>
     <p className="proof-reason">本金 ${f(c.principal)} + 利息 ${f(c.sum - c.principal)} = 終值 ${f(c.sum)}。{p.payment === 0 ? '沒有存款，就沒有本金或利息；圖中不畫假長條。' : p.rate === 0 ? '零利率時，期初期末都只得 nP，兩者相同。' : `同一組參數：期末 $${f(ordinary)} × (1 + ${p.rate}%) = 期初 $${f(ordinary * (1 + p.rate / 100))}。`}</p>
     <p className="proof-scale-note">長條共同比例以此本金、利率的 12 年複利為上限；增加存款期數不重設比例。可點選每筆查看完整算式。</p>
   </div>;

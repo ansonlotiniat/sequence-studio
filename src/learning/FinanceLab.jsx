@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { annuityPresentValue, amortizeLoan, presentValueFactor } from './finance.js';
+import ComparisonTable from '../ComparisonTable.jsx';
 
 const cash = new Intl.NumberFormat('zh-Hant', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const money = value => cash.format(value);
@@ -69,16 +70,9 @@ export default function FinanceLab({ mode, onWorked }) {
         </ol>
         <details><summary>查看逐月本金、利息與餘額（{result.periods} 期）</summary>
           <p>表內顯示至仙位；計算保留原精度，實際貸款可能調整最後一期。</p>
-          <div className="derivation-scroll" role="region" tabIndex="0" aria-label="逐月攤還表，可左右捲動">
-            <table className="amortization-table">
-              <caption>逐月攤還（MOP；左右捲動查看）</caption>
-              <thead><tr><th scope="col">月</th><th scope="col">供款</th><th scope="col">利息</th><th scope="col">歸還本金</th><th scope="col">期末欠款</th></tr></thead>
-              <tbody>{result.schedule.map(row => <tr key={row.month}>
-                <th scope="row">{row.month}</th><td>{money(row.payment)}</td><td>{money(row.interest)}</td>
-                <td>{money(row.principal)}</td><td>{money(row.balance)}</td>
-              </tr>)}</tbody>
-            </table>
-          </div>
+          <p>逐月攤還（MOP）</p>
+          <ComparisonTable label="逐月攤還（MOP）" corner="月" stackBy="row" columns={['供款', '利息', '歸還本金', '期末欠款']}
+            rows={result.schedule.map(row => ({ label: row.month, cells: [money(row.payment), money(row.interest), money(row.principal), money(row.balance)] }))}/>
         </details>
       </>}
     </div>}

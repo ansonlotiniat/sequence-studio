@@ -49,6 +49,7 @@
 .derivation-table th { position: sticky; left: 0; z-index: 1; background: #edf4e6; text-align: left; box-shadow: 1px 0 #c2d2b8; }
 .lesson-card summary { cursor: pointer; font-weight: 680; color: #2a5235; }
 .lesson-card .worked-example { margin-top: 12px; font-size: 14px; }
+.lesson-card .worked-example p { font-size: 14px; line-height: 1.8; }
 .guided-lesson > #lesson-experiment:empty { display: none; }
 .worked-fields { display: flex; flex-wrap: wrap; gap: 10px 14px; margin: 12px 0; }
 .worked-fields label { display: grid; gap: 4px; flex: 1 1 135px; min-width: 0; font-weight: 600; }
@@ -77,6 +78,8 @@
 @media(max-width: 740px) {
   .guided-lesson { --lesson-sticky-top: 64px; }
   .app-shell:has(.guided-lesson, .practice-panel) .floating-tutor { display: none; }
+  .equation-line { grid-template-columns: 20px minmax(0, 1fr); white-space: normal; overflow-wrap: anywhere; }
+  .equation-line span:first-child { grid-column: 1 / -1; text-align: left; }
 }
 @media(max-width: 450px) {
   .practice-panel .answer-row { flex-wrap: wrap; }

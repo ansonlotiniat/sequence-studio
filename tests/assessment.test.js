@@ -22,6 +22,21 @@ test('annuity prompt, worked timings and grade use the same snapshot', () => {
   assert.equal(variant.answer, Math.round(calculate('annuity', variant.scenario).sum));
 });
 
+test('annuity rounds a half-dollar up and shows the same result in its solution', () => {
+  const params = { n: 1, due: true, payment: 100, rate: 0.5 };
+  const item = makeItem('annuity', 0, 0, params);
+  assert.equal(item.answer, 101);
+  assert.equal(grade(item, '101').status, 'correct');
+  assert.match(grade(item, '100').feedback, /另一種存款時點/);
+  assert.match(item.steps.at(-1), /MOP 100\.5 → MOP 101/);
+
+  const ordinary = makeItem('annuity', 0, 0, { ...params, due: false });
+  assert.match(grade(ordinary, '101').feedback, /另一種存款時點/);
+  const belowHalf = makeItem('annuity', 0, 0, { ...params, rate: 0.4999999 });
+  assert.equal(belowHalf.answer, 100);
+  assert.match(belowHalf.steps.at(-1), /MOP 100\.499999\d* → MOP 100/);
+});
+
 test('live starting parameters are snapshotted and n=12 does not expose the target', () => {
   assert.equal(makeItem('square', 0, 0).answer, 14);
   const params = { ...defaults, a: 3, r: -1, n: 12 };

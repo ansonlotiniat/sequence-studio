@@ -55,6 +55,11 @@ export function grade(item, raw) {
 const parenthesize = x => x < 0 ? `(${x})` : x;
 const money = x => new Intl.NumberFormat('zh-Hant', { maximumFractionDigits: 6 }).format(x);
 
+function stabilizeHalfDollar(value) {
+  const midpoint = Math.floor(value) + 0.5;
+  return Math.abs(value - midpoint) <= 16 * Number.EPSILON * value ? midpoint : value;
+}
+
 const questions = {
   square: [
     (_, v) => {
@@ -217,11 +222,13 @@ const questions = {
     (p, v) => {
       const c = calculate('annuity', v ? { n: 3 + v % 7, payment: 300 + 100 * (v % 7), rate: [0, 5, 10, 4][v % 4], due: v % 2 === 0 } : p);
       const { n, payment, rate, due } = c.params, timing = due ? '期初' : '期末', i = rate / 100;
-      const alternate = Math.round(calculate('annuity', { ...c.params, due: !due }).sum);
-      return { ...number(`每年${timing}存入 MOP ${payment}，年利率 ${rate}%，每年複利一次，共 ${n} 年。第 ${n} 年年末的終值是多少澳門元？`, Math.round(c.sum),
+      const total = stabilizeHalfDollar(c.sum), answer = Math.round(total);
+      const alternate = Math.round(stabilizeHalfDollar(calculate('annuity', { ...c.params, due: !due }).sum));
+      const displayedTotal = Math.round(Number(total.toFixed(6))) === answer ? money(total) : total;
+      return { ...number(`每年${timing}存入 MOP ${payment}，年利率 ${rate}%，每年複利一次，共 ${n} 年。第 ${n} 年年末的終值是多少澳門元？`, answer,
         [`同以第 ${n} 年年末估值。第一筆生息 ${n - 1 + Number(due)} 年，最後一筆生息 ${Number(due)} 年。`,
           i === 0 ? `零利率直接相加本金：${n} × ${payment} = ${c.sum}。` : `化百分比為小數 i = ${i}。先把各筆搬到同一時點再加：${money(c.values[0])}${n > 2 ? ' + ⋯ + ' : n === 2 ? ' + ' : ''}${n > 1 ? money(c.last) : ''}。`,
-          `保留中間精度，最後四捨五入：MOP ${money(c.sum)} → MOP ${money(Math.round(c.sum))}。`],
+          `保留中間精度，最後四捨五入：MOP ${displayedTotal} → MOP ${money(answer)}。`],
         [`這是${timing}存款；先標出最後一筆到第 ${n} 年年末相隔多少年。`, '用 P(1+i) 的適當次方算各筆終值；零利率只累計本金。'],
         [[alternate, `你可能用了另一種存款時點；題目指定每年${timing}。`]], 'integer'), scenario: c.params };
     },

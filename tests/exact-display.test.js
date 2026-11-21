@@ -73,6 +73,15 @@ test('arithmetic proof marks exact decimal sums equal and genuinely shortened su
   for (const [a, d, n, expected, sign] of [[0.1, 0.2, 5, '2.5', '='], [-0.3, 0.1, 4, '-0.6', '='], [0.1234567891, 0.1234567892, 12, '9.629629556', '≈']]) {
     const proof = proofCalculation('arithmetic', calculate('arithmetic', { a, d, n }));
     assert.equal(proofFormat(proof.sum), expected);
-    assert.equal(relation(exactArithmeticSum(proof.params), proofFormat(proof.sum)), sign);
+    assert.equal(relation(exactArithmeticSum(proof.sourceParams), proofFormat(proof.sum)), sign);
+  }
+});
+
+test('proof display rounding cannot lose the original precision when choosing a relation', () => {
+  for (const input of [{ a: 0.123456789012, d: 0, n: 5 }, { a: 1, d: -1.9999999999999998, n: 2 }]) {
+    const original = calculate('arithmetic', input), proof = proofCalculation('arithmetic', original);
+    assert.equal(proof.sourceParams, original.params);
+    assert.equal(relation(exactArithmeticSum(proof.params), proofFormat(proof.sum)), '=');
+    assert.equal(relation(exactArithmeticSum(proof.sourceParams), proofFormat(proof.sum)), '≈');
   }
 });

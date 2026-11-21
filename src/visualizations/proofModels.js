@@ -73,7 +73,7 @@ export function proofCalculation(id, calculation) {
   const pairs = id === 'arithmetic' ? values.map((_, i) => proofNumber(arithmeticPairTotal(a, d, i + 1), Math.abs(2 * a) + Math.abs(i * d))) : [];
   const partialSums = id === 'arithmetic' ? values.map((_, i) => pairs[i] === 0 ? 0 : proofNumber(arithmeticPartialSum(a, d, i + 1))) : proofPartialSums(values);
   const sum = partialSums.at(-1);
-  return { ...display, values, last: values.at(-1), sum, partialSums,
+  return { ...display, sourceParams: p, values, last: values.at(-1), sum, partialSums,
     pairTotal: id === 'arithmetic' ? pairs.at(-1) : null,
     doubleSum: proofNumber(arithmeticPairTotal(sum, 0, 1)),
   };

@@ -28,11 +28,13 @@
 .sequence-basics { margin-bottom: 12px; }
 .guided-lesson .sequence-basics { margin: 0; }
 .derivation { border-top: 1px solid #dbe4d5; padding: 11px 0; }
-.derivation-table { overflow-x: auto; max-width: 100%; }
+.derivation-table { margin: 10px 0; max-width: 100%; min-width: 0; }
+.derivation-scroll { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
 .derivation-table table { border-collapse: collapse; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.derivation-table caption { text-align: left; font-size: 13px; margin-bottom: 6px; }
+.derivation-table figcaption { text-align: left; font-size: 13px; margin-bottom: 6px; }
+.derivation-table figcaption span { display: block; color: #526a4d; font-size: 12px; }
 .derivation-table :is(th, td) { padding: 4px 9px; text-align: center; border: 1px solid #dbe4d5; }
-.derivation-table th { background: #edf4e6; text-align: left; }
+.derivation-table th { position: sticky; left: 0; z-index: 1; background: #edf4e6; text-align: left; box-shadow: 1px 0 #c2d2b8; }
 .lesson-card summary { cursor: pointer; font-weight: 680; color: #2a5235; }
 .lesson-card .worked-example { margin-top: 12px; font-size: 14px; }
 .practice-panel { font-size: 14px; }

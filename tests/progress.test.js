@@ -83,4 +83,11 @@ test('an unfinished review keeps prior mastery separate from this review’s ans
   assert.deepEqual(expanded.practice.independent, [0, 1, 2]);
   assert.equal(expanded.practice.skill, 3);
   assert.equal(expanded.passedAt, undefined);
+  assert.deepEqual(expanded.previousPass, { passedAt: 100, reviewAt: 100 + day });
+  let continuing = expanded.practice;
+  while (!continuing.finished) {
+    continuing = submitPractice(id, { ...continuing, draft: String(practiceItem(id, continuing).answer) });
+    continuing = nextPractice(id, continuing);
+  }
+  assert.equal(recordPractice(expanded, continuing, 300).reviewAt, 300 + 3 * day);
 });

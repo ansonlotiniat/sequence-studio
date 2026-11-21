@@ -38,9 +38,11 @@ export function readStudy(storage) {
         const variants = Array.from({ length: count }, (_, i) => practice.variants[i] ?? 0);
         const independent = [...new Set([...mastered, ...practice.independent])];
         const skill = variants.findIndex((_, i) => !independent.includes(i));
-        chapters[id] = { ...current, practice: {
-          ...practice, ...newQuestion(), mastered, variants, independent, skill, finished: false,
-        } };
+        chapters[id] = {
+          ...current,
+          ...(passedAt && { previousPass: { passedAt, reviewAt } }),
+          practice: { ...practice, ...newQuestion(), mastered, variants, independent, skill, finished: false },
+        };
       }
       return { ...stored, chapters };
     }
@@ -89,8 +91,9 @@ export function nextPractice(id, practice, retry = false) {
 
 export function recordPractice(chapter, practice, now = Date.now()) {
   const justFinished = practice.finished && !chapter.practice?.finished;
+  const hasPriorPass = chapter.passedAt || chapter.previousPass?.passedAt;
   return {
     ...chapter, explored: true, practice: justFinished ? { ...practice, mastered: practice.independent } : practice,
-    ...(justFinished ? { passedAt: now, reviewAt: now + (chapter.passedAt ? 3 : 1) * day } : {}),
+    ...(justFinished ? { passedAt: now, reviewAt: now + (hasPriorPass ? 3 : 1) * day } : {}),
   };
 }

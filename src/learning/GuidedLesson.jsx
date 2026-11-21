@@ -18,11 +18,10 @@ function Step({ step }) {
   </div>;
 }
 
-export default function GuidedLesson({ id, onPreset, onQuiz, children }) {
+export default function GuidedLesson({ id, observing, onOpenExperiment, onPreset, onQuiz, children }) {
   const lesson = teaching[id];
   const [ready, setReady] = useState(null);
   const [prediction, setPrediction] = useState('');
-  const [observing, setObserving] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [question, options, expected, explanation] = lesson.readiness;
   return <div className="guided-lesson">
@@ -44,7 +43,7 @@ export default function GuidedLesson({ id, onPreset, onQuiz, children }) {
       <p>{lesson.hook}</p>
       <label className="prediction-label" htmlFor="prediction">{lesson.prediction}</label>
       <textarea id="prediction" rows="2" value={prediction} onChange={e => setPrediction(e.target.value)} placeholder="寫下你的猜想和理由（不評分）" maxLength={500} />
-      {!observing && <button type="button" className="primary-button" onClick={() => { setObserving(true); onPreset(lesson.presets[0]); }}>打開實驗，核對猜想 <ArrowRight size={16}/></button>}
+      {!observing && <button type="button" className="primary-button" onClick={() => onOpenExperiment(lesson.presets[0])}>打開實驗，核對猜想 <ArrowRight size={16}/></button>}
       {observing && <>
         <p className="lesson-feedback"><Lightbulb size={16} /> {lesson.observation}</p>
         <div className="lesson-actions">{lesson.presets.map(preset => <button type="button" className="outline-button" key={preset.label} onClick={() => onPreset(preset)}>{preset.label}</button>)}</div>

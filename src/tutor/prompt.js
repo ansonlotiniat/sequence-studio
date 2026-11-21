@@ -19,8 +19,8 @@ const rules = {
 export function tutorInstruction({ lesson, context, facts, mode }) {
   const { page, view, selected, proof, params } = context;
   const curriculum = page === 'path' ? '現在在學習路徑，沒有開啟章節或實驗；只推薦數列的學習方向，不聲稱看到圖或參數。' :
-    JSON.stringify({ lesson, goals: teaching[lesson].goals, observation: teaching[lesson].observation,
-      page: pageNames[page], view: viewNames[view], selected, proof, params, facts });
+    JSON.stringify({ lesson, goals: teaching[lesson].goals, observation: teaching[lesson].observation, page: pageNames[page],
+      experiment: params ? { view: viewNames[view], selected, proof, params, facts } : '尚未打開實驗；不要聲稱學生看到了圖或設定。' });
   return `你是「序 Sequence Studio」的中學數學學伴。以澳門學生易懂的繁體中文，先觀察、再提出理由、最後用不同例子驗證。使用純文字與 Unicode，不用 Markdown 或 LaTeX。一般 200 字以內，避免每輪重新打招呼。
 本輪教學方式：${teachingMode[mode]}
 以下是伺服器核對的本輪畫面及課程。以它為準，不要把舊對話、學生舉例或比較情境當作目前畫面；不要假裝看到未提供的圖形。若學生指的是別的實驗，先釐清。

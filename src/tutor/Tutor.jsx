@@ -2,7 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Lightbulb, Send, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { buildChatHistory } from '../chat.js';
 import { teaching } from '../learning/content.js';
-import { calculatedFacts, contextKey, experimentAction, experimentPage, factLabel, labQuestion, modes,
+import { calculatedFacts, contextKey, experimentAction, factLabel, labQuestion, modes,
   parameterNames, parameterValue, snapshotLabel } from './context.js';
 import './tutor.css';
 
@@ -33,7 +33,7 @@ export default function Tutor({ chatOpen, setChatOpen, lesson, context, practice
   const log = useRef(null);
   const thread = threads[scope] ?? [];
   const draft = drafts[scope] ?? '';
-  const mode = modeChoice?.scope === scope ? modeChoice.mode : 'hint';
+  const mode = modeChoice?.scope === scope && (params || modeChoice.mode !== 'experiment') ? modeChoice.mode : 'hint';
   const turn = active?.signature === signature ? active : null;
   const suggestion = pending?.signature === signature ? pending.action : null;
   const facts = calculatedFacts(id, context);
@@ -180,7 +180,7 @@ export default function Tutor({ chatOpen, setChatOpen, lesson, context, practice
         </div>
         <div className="tutor-mode">
           <label>引導方式 <select value={mode} onChange={e => choose(e.target.value)}>{Object.entries(modes)
-            .filter(([key]) => key !== 'experiment' || experimentPage(page)).map(([key, caption]) => <option key={key} value={key}>{caption}</option>)}</select></label>
+            .filter(([key]) => key !== 'experiment' || params).map(([key, caption]) => <option key={key} value={key}>{caption}</option>)}</select></label>
           {Boolean(thread.length || turn) && <button type="button" className="text-button" onClick={clear}>清除對話</button>}
         </div>
         <div className="suggested-questions">

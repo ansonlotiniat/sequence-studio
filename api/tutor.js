@@ -1,5 +1,5 @@
 import { lessons, normalize } from '../src/math.js';
-import { calculatedFacts, experimentAction, experimentContext, experimentPage, modes, pageNames, parameterKeys, viewNames } from '../src/tutor/context.js';
+import { calculatedFacts, experimentAction, experimentContext, modes, pageNames, parameterKeys, viewNames } from '../src/tutor/context.js';
 import { quizInstruction, quizSchema, replySchema, tutorInstruction } from '../src/tutor/prompt.js';
 import { quizHelp } from '../src/tutor/practice.js';
 
@@ -20,14 +20,15 @@ export function parseInput(body) {
   if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length > 10) throw new Error('invalid');
   const { page = 'lab', view = 'shape', proof, selected, params = body.params } = body.context ?? {};
   if (!Object.hasOwn(pageNames, page) || !Object.hasOwn(viewNames, view) || !Object.hasOwn(modes, mode) ||
-      page === 'quiz' || (mode === 'experiment' && !experimentPage(page))) throw new Error('invalid');
+      page === 'quiz') throw new Error('invalid');
   const messages = body.messages.map(m => {
     if (!m || !['user','assistant'].includes(m.role) || typeof m.text !== 'string' || !m.text.trim() || m.text.length > 2000) throw new Error('invalid');
     return { role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text.trim() }] };
   });
   if (messages.at(-1).role !== 'user') throw new Error('invalid');
   while (messages[0]?.role === 'model') messages.shift();
-  const context = experimentContext(lesson, page, normalize(params), view, proof, selected);
+  const context = experimentContext(lesson, page, page === 'learn' && !params ? null : normalize(params), view, proof, selected);
+  if (mode === 'experiment' && !context.params) throw new Error('invalid');
   return { messages, lesson, mode, context, facts: calculatedFacts(lesson, context) };
 }
 

@@ -50,6 +50,13 @@ test('experimental facts handle special geometric ratios and zero interest', () 
   assert.deepEqual(end.periods, [3, 2, 1, 0]);
   assert.deepEqual(beginning.periods, [4, 3, 2, 1]);
 });
+test('unopened lesson experiment supplies no visual facts or action schema', () => {
+  const learn = { ...input, context: { page: 'learn' } };
+  assert.deepEqual(parseInput(learn).context, { page: 'learn' });
+  assert.equal(parseInput(learn).facts, null);
+  assert.throws(() => parseInput({ ...learn, mode: 'experiment' }));
+  assert.equal(parseInput({ ...learn, context: { page: 'learn', params: { n: 5 } } }).facts.sum, 55);
+});
 test('actions accept only actual, valid changes to parameters of the current experiment', () => {
   assert.deepEqual(experimentAction({ params: { n: 7 } }, 'square', { n: 5 }), { params: { n: 7 } });
   for (const invalid of [{ n: 5 }, { n: 1.5 }, { n: 99 }, { a: 10 }, { n: 7, html: 'bad' }]) {

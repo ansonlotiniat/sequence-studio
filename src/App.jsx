@@ -7,7 +7,7 @@ import Practice from './learning/Practice.jsx';
 import { fromHash, practiceItem, readStudy, recordPractice, startPractice, storageKey } from './learning/progress.js';
 import Lab from './visualizations/Lab.jsx';
 import Tutor from './tutor/Tutor.jsx';
-import { contextKey, experimentAction, experimentContext, experimentPage } from './tutor/context.js';
+import { contextKey, experimentAction, experimentContext } from './tutor/context.js';
 
 function atLocation(study, location) {
   const { id, page } = location;
@@ -29,6 +29,7 @@ export default function App() {
   const [view, setView] = useState('shape');
   const [proof, setProof] = useState(false);
   const [experimentRun, setExperimentRun] = useState(0);
+  const [lessonExperimentOpen, setLessonExperimentOpen] = useState(false);
   const [selection, setSelection] = useState(null);
   const { id, page } = study.location;
   const chapter = study.chapters[id] ?? {};
@@ -36,10 +37,11 @@ export default function App() {
   const lesson = lessons[index];
   const nextLesson = lessons[index + 1];
   const c = calculate(id, study.experiments[id] ?? defaults);
-  const baseContext = experimentContext(id, page, c.params, view, proof);
+  const visibleParams = page === 'lab' || (page === 'learn' && lessonExperimentOpen) ? c.params : null;
+  const baseContext = experimentContext(id, page, visibleParams, view, proof);
   const selectionBasis = contextKey(id, baseContext);
   const onSelectionChange = useCallback(term => setSelection(term ? { term, basis: selectionBasis } : null), [selectionBasis]);
-  const tutorContext = experimentContext(id, page, c.params, view, proof,
+  const tutorContext = experimentContext(id, page, visibleParams, view, proof,
     selection?.basis === selectionBasis ? selection.term : null);
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function App() {
       });
       setProof(false);
       setView('shape');
+      setLessonExperimentOpen(false);
     };
     window.addEventListener('hashchange', onLocationChange);
     return () => window.removeEventListener('hashchange', onLocationChange);
@@ -67,6 +70,7 @@ export default function App() {
   function navigate(page, nextId = id) {
     const location = { id: nextId, page };
     if (nextId !== id) { setView('shape'); setProof(false); }
+    if (nextId !== id || page !== study.location.page) setLessonExperimentOpen(false);
     const hash = `#/${nextId}/${page}`;
     if (window.location.hash !== hash) window.history.pushState(null, '', hash);
     setStudy(current => atLocation(current, location));
@@ -89,7 +93,7 @@ export default function App() {
   }
 
   function applyAction(action, basis) {
-    if (!experimentPage(page) || contextKey(id, tutorContext) !== contextKey(id, basis)) return;
+    if (!visibleParams || contextKey(id, tutorContext) !== contextKey(id, basis)) return;
     setStudy(current => {
       const params = normalize(current.experiments[id] ?? defaults);
       if (current.location.id !== id || current.location.page !== page ||
@@ -149,7 +153,9 @@ export default function App() {
         onLab={() => navigate('lab')} onLearn={() => navigate('learn')} hasNext={Boolean(nextLesson)}
         onNextChapter={() => nextLesson ? navigate('learn', nextLesson.id) : navigate('path')}
         onRestart={() => changePractice(startPractice(id, c.params, chapter.practice))} /> : page === 'learn' ?
-      <GuidedLesson key={id} id={id} onPreset={preset} onQuiz={() => navigate('quiz')}>{lab}</GuidedLesson> : <>
+      <GuidedLesson key={id} id={id} observing={lessonExperimentOpen}
+        onOpenExperiment={next => { setLessonExperimentOpen(true); preset(next); }}
+        onPreset={preset} onQuiz={() => navigate('quiz')}>{lab}</GuidedLesson> : <>
         {lab}
         <section className="next-step">
           <div><span>從實驗到解釋</span><p>用預測、推導和例題，把觀察寫成自己的理由。</p></div>

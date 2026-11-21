@@ -17,7 +17,7 @@ export const parameterKeys = lesson => ['n', ...(extras[lesson] ?? [])];
 export const pickParams = (lesson, params) => Object.fromEntries(parameterKeys(lesson).map(key => [key, params[key]]));
 
 export function experimentContext(lesson, page, params, view, proof, selected) {
-  if (!experimentPage(page)) return { page };
+  if (!experimentPage(page) || !params) return { page };
   return {
     page,
     view: Object.hasOwn(viewNames, view) ? view : 'shape',
@@ -84,7 +84,8 @@ export function factLabel(lesson, context, facts) {
 }
 
 export function labQuestion(lesson, context) {
-  if (!context.params) return '我應該從哪個數列開始？先給我一個可試的觀察。';
+  if (!context.params) return context.page === 'path' ? '我應該從哪個數列開始？先給我一個可試的觀察。' :
+    '打開這章的實驗前，我可以先預測甚麼？';
   const { r, rate } = context.params;
   return ({
     square: '我應該怎樣從圖上區分一項、累積和與新加的方塊？',

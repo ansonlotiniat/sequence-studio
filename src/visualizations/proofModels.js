@@ -1,3 +1,5 @@
+import { arithmeticPairTotal, arithmeticPartialSum, calculate } from '../math.js';
+
 // Geometry uses fixed unit coordinates; changing n never changes the unit size.
 export function squareTiles(n) {
   return Array.from({ length: n * n }, (_, i) => ({
@@ -41,6 +43,42 @@ export function visualFormat(value) {
   return Number(value.toPrecision(7)).toLocaleString('zh-Hant', { maximumSignificantDigits: 7 });
 }
 
+export function proofNumber(value, operandScale = 0) {
+  if (value === 0 || (operandScale > 0 && Math.abs(value) / operandScale < 1e-12)) return 0;
+  return Number(value.toPrecision(10));
+}
+
+export function proofFormat(value) {
+  const number = proofNumber(value);
+  return number !== 0 && (Math.abs(number) < 0.001 || Math.abs(number) >= 1e10)
+    ? String(number) : number.toLocaleString('zh-Hant', { maximumSignificantDigits: 10 });
+}
+
+export function proofPartialSums(values) {
+  let sum = 0, scale = 0;
+  return values.map(value => {
+    sum += value;
+    scale += Math.abs(value);
+    return proofNumber(sum, scale);
+  });
+}
+
+// Presentation uses the displayed operands; the calculator and input state stay unchanged.
+export function proofCalculation(id, calculation) {
+  if (id !== 'arithmetic' && id !== 'geometric') return calculation;
+  const p = calculation.params;
+  const display = calculate(id, { ...p, a: proofNumber(p.a), d: proofNumber(p.d), r: proofNumber(p.r) });
+  const { a, d } = display.params;
+  const values = display.values.map((value, i) => id === 'arithmetic' ? proofNumber(value, Math.abs(a) + Math.abs(i * d)) : value);
+  const pairs = id === 'arithmetic' ? values.map((_, i) => proofNumber(arithmeticPairTotal(a, d, i + 1), Math.abs(2 * a) + Math.abs(i * d))) : [];
+  const partialSums = id === 'arithmetic' ? values.map((_, i) => pairs[i] === 0 ? 0 : proofNumber(arithmeticPartialSum(a, d, i + 1))) : proofPartialSums(values);
+  const sum = partialSums.at(-1);
+  return { ...display, values, last: values.at(-1), sum, partialSums,
+    pairTotal: id === 'arithmetic' ? pairs.at(-1) : null,
+    doubleSum: proofNumber(arithmeticPairTotal(sum, 0, 1)),
+  };
+}
+
 export function formatIndex(index, script = 'subscript') {
   if (!Number.isSafeInteger(index) || index < 0) throw new RangeError('Index must be a nonnegative safe integer');
   const digits = script === 'superscript' ? '⁰¹²³⁴⁵⁶⁷⁸⁹' : '₀₁₂₃₄₅₆₇₈₉';
@@ -54,8 +92,7 @@ export function chartDomain(values) {
   return [min - margin, max + margin];
 }
 
-export function arithmeticPicture(values, first) {
-  const height = values[0] + values.at(-1);
+export function arithmeticPicture(values, first, height = values[0] + values.at(-1)) {
   const positive = values.every(v => v > 0);
   const unitBlocks = positive && values.every(Number.isInteger);
   const cells = [];

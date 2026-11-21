@@ -1,7 +1,80 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, formatIndex, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks, squareSumCells, squareSumTower, annuityLedger } from '../src/visualizations/proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, proofNumber, proofFormat, proofCalculation, proofPartialSums, formatIndex, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks, squareSumCells, squareSumTower, annuityLedger } from '../src/visualizations/proofModels.js';
 import { arithmeticPairTotal, arithmeticPartialSum, calculate } from '../src/math.js';
+
+test('arithmetic display equations share decimal-safe operands without changing exact calculations', () => {
+  const original = calculate('arithmetic', { a: 1, d: -1.9999999999999998, n: 2 });
+  const display = proofCalculation('arithmetic', original);
+  assert.equal(original.sum, 2e-16);
+  assert.equal(original.params.d, -1.9999999999999998);
+  assert.deepEqual(display.values, [1, -1]);
+  assert.equal(display.params.d, -2);
+  assert.equal(display.pairTotal, 0);
+  assert.equal(display.doubleSum, 0);
+  assert.equal(display.sum, 0);
+  assert.equal(proofFormat(display.last), '-1');
+  assert.equal(proofFormat(display.sum), '0');
+  for (const [a, d, n] of [[0.3, -0.1, 7], [-0.3, 0.1, 7], [0.1, 0.1, 3], [1e-20, 0, 12]]) {
+    const shown = proofCalculation('arithmetic', calculate('arithmetic', { a, d, n }));
+    assert.equal(shown.pairTotal, proofNumber(arithmeticPairTotal(a, d, n)));
+    assert.equal(shown.sum, proofNumber(arithmeticPartialSum(a, d, n)));
+    assert.equal(shown.doubleSum, proofNumber(shown.pairTotal * n));
+  }
+});
+
+test('display cancellation preserves genuine small differences above floating-point noise', () => {
+  for (const [d, n, last, pair, sum] of [
+    [-1.999999999, 2, -0.999999999, 1e-9, 1e-9],
+    [-0.1818181816, 12, -0.9999999976, 2.4e-9, 1.44e-8],
+  ]) {
+    const display = proofCalculation('arithmetic', calculate('arithmetic', { a: 1, d, n }));
+    assert.equal(display.last, last);
+    assert.equal(display.pairTotal, pair);
+    assert.equal(display.sum, sum);
+    assert.equal(display.doubleSum, 2 * sum);
+    assert.equal(display.partialSums.at(-1), display.sum);
+  }
+  assert.equal(proofNumber(1e-9, 4), 1e-9);
+  assert.equal(proofNumber(2e-16, 4), 0);
+});
+
+test('geometric display sums, tails, limits and shifted terms trim floating noise', () => {
+  assert.equal(proofFormat(0.1 + 0.2), '0.3');
+  assert.deepEqual(proofPartialSums([0.1, 0.2, -0.3]), [0.1, 0.3, 0]);
+  assert.deepEqual(proofPartialSums([]), []);
+  for (const [a, r, n, sum] of [[0.1, 0.1, 3, 0.111], [0.3, 0.3, 3, 0.417], [0.3, -0.7, 2, 0.09], [0.3, 1.1, 2, 0.63]]) {
+    assert.equal(proofCalculation('geometric', calculate('geometric', { a, r, n })).sum, sum);
+  }
+  for (const a of [0.1, 0.3]) for (const r of [0.1, 0.3, -0.7, 1.1]) for (const n of [1, 2, 5, 12]) {
+    const original = calculate('geometric', { a, r, n });
+    const display = proofCalculation('geometric', original);
+    assert.deepEqual(display.partialSums, proofPartialSums(display.values));
+    assert.equal(display.sum, display.partialSums.at(-1));
+    const shiftedLast = a * r ** n;
+    const difference = a - shiftedLast;
+    assert.ok(Math.abs((1 - r) * display.sum - difference) <= Math.max(1e-20, Math.abs(difference) * 1e-9));
+    const numbers = [...display.values, ...display.partialSums, shiftedLast];
+    if (Math.abs(r) < 1) numbers.push(a / (1 - r), geometricTail(a, r, n));
+    for (const value of numbers) {
+      assert.ok(Number.isFinite(proofNumber(value)));
+      const significantDigits = proofFormat(value).split('e')[0].replace(/\D/g, '').replace(/^0+/, '');
+      assert.ok(significantDigits.length <= 10);
+    }
+  }
+});
+
+test('noise cleanup is relative and display-only, preserving genuinely small magnitudes', () => {
+  assert.equal(proofNumber(2e-16, 2), 0);
+  assert.equal(proofNumber(-2e-17, 0.3), 0);
+  assert.equal(proofNumber(1e-20, 1e-20), 1e-20);
+  assert.equal(proofFormat(2e-16), '2e-16');
+  assert.equal(proofNumber(0), 0);
+  for (const id of ['square', 'annuity', 'fibonacci']) {
+    const original = calculate(id, { n: 3 });
+    assert.equal(proofCalculation(id, original), original);
+  }
+});
 
 test('integer indices use Unicode subscript and superscript digits', () => {
   assert.equal(formatIndex(0), '₀');

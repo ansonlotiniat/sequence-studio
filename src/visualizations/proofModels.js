@@ -68,12 +68,13 @@ export function proofCalculation(id, calculation) {
   if (id !== 'arithmetic' && id !== 'geometric') return calculation;
   const p = calculation.params;
   const display = calculate(id, { ...p, a: proofNumber(p.a), d: proofNumber(p.d), r: proofNumber(p.r) });
-  const { a, d, n } = display.params;
-  const values = display.values.map((value, i) => proofNumber(value, id === 'arithmetic' ? Math.abs(a) + Math.abs(i * d) : 0));
-  const partialSums = id === 'arithmetic' ? values.map((_, i) => proofNumber(arithmeticPartialSum(a, d, i + 1), values.slice(0, i + 1).reduce((sum, v) => sum + Math.abs(v), 0))) : proofPartialSums(values);
+  const { a, d } = display.params;
+  const values = display.values.map((value, i) => id === 'arithmetic' ? proofNumber(value, Math.abs(a) + Math.abs(i * d)) : value);
+  const pairs = id === 'arithmetic' ? values.map((_, i) => proofNumber(arithmeticPairTotal(a, d, i + 1), Math.abs(2 * a) + Math.abs(i * d))) : [];
+  const partialSums = id === 'arithmetic' ? values.map((_, i) => pairs[i] === 0 ? 0 : proofNumber(arithmeticPartialSum(a, d, i + 1))) : proofPartialSums(values);
   const sum = partialSums.at(-1);
   return { ...display, values, last: values.at(-1), sum, partialSums,
-    pairTotal: id === 'arithmetic' ? proofNumber(arithmeticPairTotal(a, d, n), Math.abs(2 * a) + Math.abs((n - 1) * d)) : null,
+    pairTotal: id === 'arithmetic' ? pairs.at(-1) : null,
     doubleSum: proofNumber(arithmeticPairTotal(sum, 0, 1)),
   };
 }

@@ -15,6 +15,10 @@ test('arithmetic display equations share decimal-safe operands without changing 
   assert.equal(display.sum, 0);
   assert.equal(proofFormat(display.last), '-1');
   assert.equal(proofFormat(display.sum), '0');
+  const nearZero = proofCalculation('arithmetic', calculate('arithmetic', { a: 1, d: -0.1818181816, n: 12 }));
+  assert.equal(nearZero.pairTotal, 0);
+  assert.equal(nearZero.sum, 0);
+  assert.equal(nearZero.doubleSum, 0);
   for (const [a, d, n] of [[0.3, -0.1, 7], [-0.3, 0.1, 7], [0.1, 0.1, 3], [1e-20, 0, 12]]) {
     const shown = proofCalculation('arithmetic', calculate('arithmetic', { a, d, n }));
     assert.equal(shown.pairTotal, proofNumber(arithmeticPairTotal(a, d, n)));
@@ -42,7 +46,8 @@ test('geometric display sums, tails, limits and shifted terms trim floating nois
     if (Math.abs(r) < 1) numbers.push(a / (1 - r), geometricTail(a, r, n));
     for (const value of numbers) {
       assert.ok(Number.isFinite(proofNumber(value)));
-      assert.doesNotMatch(proofFormat(value), /\d{15}/);
+      const significantDigits = proofFormat(value).split('e')[0].replace(/\D/g, '').replace(/^0+/, '');
+      assert.ok(significantDigits.length <= 10);
     }
   }
 });

@@ -79,4 +79,8 @@ test('decimal arithmetic pairs cancel consistently without erasing genuinely tin
     assert.ok(Math.abs(arithmeticPartialSum(a, d, n) - expected) < 1e-12);
   }
   assert.ok(arithmeticPartialSum(-0.3, 0.10001, 7) > 0);
+  // Deliberate near-cancellation is not a rounding error to erase.
+  assert.equal(calculate('arithmetic', { a: 1, d: -0.9999999999999999, n: 2 }).values[1], 1e-16);
+  assert.equal(calculate('arithmetic', { a: 1, d: -1.9999999999999998, n: 2 }).sum, 2e-16);
+  assert.equal(calculate('arithmetic', { a: 5e-324, d: 0, n: 1 }).last, 5e-324);
 });

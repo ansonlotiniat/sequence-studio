@@ -11,22 +11,31 @@ export function normalize(input = {}) {
   const num = (key, min, max, fallback) => Number.isFinite(Number(input[key])) ? Math.min(max, Math.max(min, Number(input[key]))) : fallback;
   return { n: Math.round(num('n', 1, 12, 5)), a: num('a', -20, 20, 2), d: num('d', -10, 10, 3), r: num('r', -3, 3, 2), payment: num('payment', 0, 100000, 1000), rate: num('rate', 0, 30, 5), due: input.due === true };
 }
-function cancelRoundoff(left, right) {
-  const sum = left + right;
-  const roundoff = 2 * Number.EPSILON * (Math.abs(left) + Math.abs(right));
-  return Math.abs(sum) <= roundoff ? 0 : sum;
+// Use the input numbers' decimal representations for linear combinations.
+// Unlike an epsilon cutoff, this preserves intentionally tiny nonzero answers
+// while making typed decimals such as -0.3 + 3*0.1 cancel exactly.
+function decimalLinear(a, aMultiple, d, dMultiple) {
+  function parts(value) {
+    const [mantissa, exponent = '0'] = String(value).split('e');
+    return { coefficient: BigInt(mantissa.replace('.', '')), exponent: Number(exponent) - (mantissa.split('.')[1]?.length ?? 0) };
+  }
+  const left = parts(a), right = parts(d);
+  const exponent = Math.min(left.exponent, right.exponent);
+  const coefficient = BigInt(aMultiple) * left.coefficient * 10n ** BigInt(left.exponent - exponent)
+    + BigInt(dMultiple) * right.coefficient * 10n ** BigInt(right.exponent - exponent);
+  return Number(`${coefficient}e${exponent}`);
 }
 export function arithmeticPairTotal(a, d, n) {
-  return cancelRoundoff(2 * a, (n - 1) * d);
+  return decimalLinear(a, 2, d, n - 1);
 }
 export function arithmeticPartialSum(a, d, n) {
-  return n * arithmeticPairTotal(a, d, n) / 2;
+  return decimalLinear(a, n, d, n * (n - 1) / 2);
 }
 export function calculate(id, input) {
   const p = normalize(input);
   const values = [];
   for (let k = 1; k <= p.n; k++) {
-    if (id === 'arithmetic') values.push(cancelRoundoff(p.a, (k - 1) * p.d));
+    if (id === 'arithmetic') values.push(decimalLinear(p.a, 1, p.d, k - 1));
     else if (id === 'geometric') values.push(k === 1 ? p.a : p.a * p.r ** (k - 1));
     else if (id === 'triangular') values.push(k * (k + 1) / 2);
     else if (id === 'fibonacci') values.push(k < 3 ? 1 : values[k - 2] + values[k - 3]);

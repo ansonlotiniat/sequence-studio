@@ -39,7 +39,7 @@ export function SequenceChart({ values, selected, setSelected, cumulative = fals
   const unit = annuityYear === null ? '項' : '筆';
   const title = annuityYear !== null ? `第 ${annuityYear} 年年末的${cumulative ? '存款終值小計' : '各筆存款終值'}` : cumulative ? '部分和 Sₖ' : '單項 aₖ';
   return <div className="proof-chart">
-    {allowLog && <><ScaleToggle {...{ log, setLog }}/>{log && <p className="picture-caption">縱軸為帶符號的對數距離：正值向上、負值向下；距離 = log₁₀|aₖ| − ({logarithm.origin}) + 1。零值在軸上；刻度顯示距離，不是原數值，精確值見下表。</p>}</>}
+    {allowLog && <><ScaleToggle {...{ log, setLog }}/>{log && <p className="picture-caption">縱軸為帶符號的對數距離：正值向上、負值向下；距離 = log₁₀|aₖ| {logarithm.origin < 0 ? '+' : '−'} {Math.abs(logarithm.origin)} + 1。零值在軸上；刻度顯示距離，不是原數值，精確值見下表。</p>}</>}
     <div className="proof-chart-options"><label><input type="checkbox" checked={fixed} onChange={e => setFixed(e.target.checked)}/>固定為 12 {unit}的縱軸比例</label><label><input type="checkbox" checked={connect} onChange={e => setConnect(e.target.checked)}/>連線輔助觀察</label></div>
     <p className="proof-scale-note">{fixed ? annuityYear !== null ? '縱軸參照同參數的 12 年模型；資料仍在本次終點估值。' : '縱軸按相同參數的 12 項固定，方便逐項比較。' : '縱軸依目前數值自動調整；高度只在本圖內比較。'}數列只定義整數位置，連線不代表中間另有項。</p>
     <div ref={chartRef} className={`proof-scroll ${allowLog ? 'picture-responsive-chart' : ''}`} tabIndex="0" role="region" aria-label={allowLog ? '隨寬度調整的數列圖表' : '可左右捲動的數列圖表'}>

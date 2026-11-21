@@ -41,6 +41,12 @@ export function visualFormat(value) {
   return Number(value.toPrecision(7)).toLocaleString('zh-Hant', { maximumSignificantDigits: 7 });
 }
 
+export function formatIndex(index, script = 'subscript') {
+  if (!Number.isSafeInteger(index) || index < 0) throw new RangeError('Index must be a nonnegative safe integer');
+  const digits = script === 'superscript' ? '⁰¹²³⁴⁵⁶⁷⁸⁹' : '₀₁₂₃₄₅₆₇₈₉';
+  return String(index).replace(/\d/g, digit => digits[Number(digit)]);
+}
+
 export function chartDomain(values) {
   const min = Math.min(0, ...values), max = Math.max(0, ...values);
   if (min === max) return [-1, 1];

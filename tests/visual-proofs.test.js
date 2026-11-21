@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks } from '../src/visualizations/proofModels.js';
+import { squareTiles, triangleCopies, shiftedTerms, geometricTail, visualFormat, formatIndex, chartDomain, arithmeticPicture, geometricAreas, signedLogScale, cancellationBlocks } from '../src/visualizations/proofModels.js';
 import { arithmeticPairTotal, arithmeticPartialSum, calculate } from '../src/math.js';
+
+test('integer indices use Unicode subscript and superscript digits', () => {
+  assert.equal(formatIndex(0), '₀');
+  assert.equal(formatIndex(1234567890), '₁₂₃₄₅₆₇₈₉₀');
+  assert.equal(formatIndex(0, 'superscript'), '⁰');
+  assert.equal(formatIndex(1234567890, 'superscript'), '¹²³⁴⁵⁶⁷⁸⁹⁰');
+  for (const value of [-1, 0.5, NaN, Infinity]) assert.throws(() => formatIndex(value), RangeError);
+});
 
 test('arithmetic pictures tile the doubled-sum rectangle for positive integers', () => {
   for (let n = 1; n <= 12; n++) for (const [a, d] of [[2, 3], [3, 4], [20, -1], [1, 0]]) {

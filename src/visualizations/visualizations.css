@@ -15,6 +15,8 @@
 .lab-visualizations .proof-term-picker { display: flex; flex-wrap: wrap; align-items: stretch; gap: 7px; margin: 16px 0; }
 .lab-visualizations .proof-term-picker button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; min-height: 60px; padding: 8px 11px; border: 1px solid #dce3d5; background: #fff; border-radius: 8px; color: #3e5947; font-size: 13px; gap: 3px; }
 .lab-visualizations .proof-term-picker strong { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lab-visualizations [data-proof="arithmetic"] .proof-term-picker button { min-width: 0; max-width: 100%; }
+.lab-visualizations [data-proof="arithmetic"] .proof-term-picker strong { overflow-wrap: anywhere; }
 .lab-visualizations .proof-term-picker small { font-size: 11px; color: #526453; }
 .lab-visualizations button[aria-pressed="true"] { outline: 2px solid #52715b; outline-offset: -2px; }
 .lab-visualizations .source-a { background: #e1eddf !important; color: #234c37; }

@@ -6,9 +6,9 @@ export function Legend({ items }) {
   return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{text}</li>)}</ul>;
 }
 
-export function TermPicker({ values, selected, onSelect, prefix = 'a', sources = false }) {
+export function TermPicker({ values, selected, onSelect, prefix = 'a', sources = false, formatValue = f }) {
   return <div className="proof-term-picker" aria-label="選擇要觀察的項">{values.map((value, i) => <button key={i} type="button" aria-pressed={selected === i} onClick={() => onSelect(i)} className={sources && selected >= 2 ? i === selected - 2 ? 'source-a' : i === selected - 1 ? 'source-b' : '' : ''}>
-    <span>{prefix}<sub>{i + 1}</sub></span><strong>{f(value)}</strong>
+    <span>{prefix}<sub>{i + 1}</sub></span><strong>{formatValue(value)}</strong>
     {sources && <small>{i === selected ? '觀察項' : selected >= 2 && i === selected - 2 ? '來源 A' : selected >= 2 && i === selected - 1 ? '來源 B' : '選此項'}</small>}
   </button>)}</div>;
 }
@@ -69,18 +69,20 @@ export function ArithmeticProof({ c, selected, setSelected }) {
   const { values, params: p } = c, k = selected ?? p.n - 1;
   const pairTotal = arithmeticPairTotal(p.a, p.d, p.n);
   const sum = c.sum;
+  const decimal = !Number.isInteger(p.a) || !Number.isInteger(p.d);
   return <div className="proof-scene" data-proof="arithmetic">
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
-    <TermPicker values={values} selected={k} onSelect={setSelected}/>
-    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : `a${k + 1} − a${k} = ${f(values[k])} − (${f(values[k - 1])}) = ${f(p.d)}`}</p>
+    <TermPicker values={values} selected={k} onSelect={setSelected} formatValue={String}/>
+    <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : `a${k + 1} − a${k} = d；本次公差 d = ${String(p.d)}`}</p>
     <button className="proof-action proof-primary" aria-expanded={paired} onClick={() => setPaired(!paired)}>{paired ? '收起配對結果，再預測一次' : '倒寫配對，檢查每對的和'}</button>
     <div className="proof-scroll" tabIndex="0" role="region" aria-label="正寫與倒寫配對表"><table className="proof-table"><thead><tr><th scope="col">位置</th>{values.map((_, i) => <th scope="col" key={i}>{i + 1}</th>)}</tr></thead><tbody>
-      <tr><th scope="row">正寫 Sₙ</th>{values.map((v, i) => <td key={i} className={i === k ? 'source-a' : ''}>{f(v)}</td>)}</tr>
-      <tr><th scope="row">倒寫 Sₙ</th>{values.map((_, i) => <td key={i} className={i === k ? 'source-b' : ''}>{f(values[p.n - i - 1])}</td>)}</tr>
-      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((_, i) => <td key={i}>{f(pairTotal)}</td>)}</tr>}
+      <tr><th scope="row">正寫 Sₙ</th>{values.map((v, i) => <td key={i} className={i === k ? 'source-a' : ''}>{String(v)}</td>)}</tr>
+      <tr><th scope="row">倒寫 Sₙ</th>{values.map((_, i) => <td key={i} className={i === k ? 'source-b' : ''}>{String(values[p.n - i - 1])}</td>)}</tr>
+      {paired && <tr className="proof-total-row"><th scope="row">每對相加</th>{values.map((_, i) => <td key={i}>{String(pairTotal)}</td>)}</tr>}
     </tbody></table></div>
     <Legend items={[[ 'base', '正寫的一份總和' ], [ 'copy', '倒寫的另一份總和' ]]}/>
-    <Equation>{paired ? `2S${p.n} = ${p.n} × (${f(values[0])} + ${f(c.last)}) = ${f(2 * sum)}；S${p.n} = ${f(sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
+    <Equation>{paired ? decimal ? `2S${p.n} = ${p.n}(a₁ + a${p.n})；代入目前參數：S${p.n} ≈ ${String(sum)}` : `2S${p.n} = ${p.n} × (${f(values[0])} + ${f(c.last)}) = ${f(2 * sum)}；S${p.n} = ${f(sum)}` : `每對會是 a₁ + a${p.n}，共 ${p.n} 對；這是兩份總和`}</Equation>
+    {decimal && <p className="proof-scale-note">小數表保留可表示的有效位數；數值可能為近似值，恆等式以符號為準。離開輸入框後會顯示實際採用的參數。</p>}
     <p className="proof-reason">{p.n === 1 ? '只有一項時，也把同一項寫兩次：2S₁ = 2a₁，再除以 2。' : '即使公差為負或跨過零，倒寫後仍是一增一減、互相抵消；不是把負值當成面積。'}</p>
   </div>;
 }

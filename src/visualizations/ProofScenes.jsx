@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { arithmeticPairTotal } from '../math.js';
 import { squareTiles, triangleCopies, shiftedTerms, visualFormat as f } from './proofModels.js';
 
@@ -24,11 +24,11 @@ export function SquareProof({ c, selected, setSelected }) {
     <TermPicker values={c.values} selected={k - 1} onSelect={setSelected}/>
     <button className="proof-action" aria-pressed={split} onClick={() => setSplit(!split)}>{split ? '把 L 形接回去' : '拆開新增的 L 形'}</button>
     <div className="proof-scroll" tabIndex="0" role="region" aria-label="單位方塊圖，每格邊長保持相同">
-      <svg className="proof-unit-svg" width={Math.max(260, k * 18 + 76)} height={k * 18 + 56} role="img" aria-label={`${old} 個原有方塊，加 ${ring} 個 L 形方塊，等於 ${k * k}`}>
+      <svg className="proof-unit-svg" width={Math.max(260, k * 18 + 76)} height={k * 18 + 28} role="img" aria-label={`${old} 個原有方塊，加 ${ring} 個 L 形方塊，等於 ${k * k}`}>
         {squareTiles(k).map(({ row, col, ring: isRing }) => <rect key={`${row}:${col}`} className={`proof-moving proof-fill-${isRing ? 'new' : 'base'}`} x={24 + col * 18} y={12 + row * 18} width="16" height="16" rx="2" style={{ transform: isRing && split ? 'translate(26px, 12px)' : 'translate(0, 0)' }}/>) }
-        <text x="24" y={k * 18 + 49} className="proof-svg-label">每格 = 1 平方單位；增加項數不縮小方塊</text>
       </svg>
     </div>
+    <p className="proof-scale-note">每格 = 1 平方單位；增加項數不縮小方塊</p>
     <Legend items={[[ 'base', `原有 (${k} − 1)² = ${old} 格` ], [ 'new', `新增 ${k} + ${k - 1} = ${ring} 格` ]]}/>
     <Equation>{k}² = {old} + {ring} = {k * k}</Equation>
     <p className="proof-reason">底邊 {k} 格，右邊扣除角落後 {k - 1} 格；角落不能數兩次。{k === 1 ? '起點視為 0² = 0。' : `所以新增量是 2 × ${k} − 1，不是 ${k}。`}</p>
@@ -37,6 +37,10 @@ export function SquareProof({ c, selected, setSelected }) {
 
 export function TriangleProof({ c, proof, setProof }) {
   const [adjacent, setAdjacent] = useState(false);
+  const region = useRef(null);
+  function reposition() { if (region.current) region.current.scrollLeft = 0; }
+  function changeMode(next) { if (next === adjacent) return; reposition(); setAdjacent(next); setProof(false); }
+  function assemble() { reposition(); setProof(!proof); }
   const n = c.params.n, gap = 18, start = 28;
   const { original, copy, columns } = triangleCopies(n, adjacent);
   const secondOrigin = start + (n + 3) * gap;
@@ -44,16 +48,16 @@ export function TriangleProof({ c, proof, setProof }) {
   const transform = proof ? `translate(${start + (columns - 1) * gap}px, ${26 + (copyRows - 1) * gap}px) rotate(180deg)` : `translate(${secondOrigin}px, 26px) rotate(0deg)`;
   return <div className="proof-scene" data-proof="triangular">
     <div className="proof-heading"><h3>兩份點陣，不增不減地重排</h3><p>{adjacent ? '第二份少一排，預測會拼成甚麼。' : '先數兩份是否一樣多，再把藍色那份旋轉 180°。'}</p></div>
-    <div className="proof-actions"><button className="proof-action" aria-pressed={!adjacent} onClick={() => { setAdjacent(false); setProof(false); }}>兩個 Tₙ → 長方形</button><button className="proof-action" aria-pressed={adjacent} onClick={() => { setAdjacent(true); setProof(false); }}>Tₙ + Tₙ₋₁ → 正方形</button></div>
-    <button className="proof-action proof-primary" aria-pressed={proof} onClick={() => setProof(!proof)}>{proof ? '還原兩份點陣' : '旋轉第二份，拼合驗證'}</button>
-    <div className="proof-scroll" tabIndex="0" role="region" aria-label="點陣證明，可橫向捲動；綠色原件與藍色副本">
-      <svg className="proof-unit-svg" width={Math.max(300, secondOrigin + n * gap + 22)} height={n * gap + 73} role="img" aria-label={proof ? `${n} 行，每行 ${columns} 點，合共 ${n * columns} 點` : `第一份 ${original.length} 點，第二份 ${copy.length} 點`}>
+    <div className="proof-actions"><button className="proof-action" aria-pressed={!adjacent} onClick={() => changeMode(false)}>兩個 Tₙ → 長方形</button><button className="proof-action" aria-pressed={adjacent} onClick={() => changeMode(true)}>Tₙ + Tₙ₋₁ → 正方形</button></div>
+    <button className="proof-action proof-primary" aria-pressed={proof} onClick={assemble}>{proof ? '還原兩份點陣' : '旋轉第二份，拼合驗證'}</button>
+    <div ref={region} className="proof-scroll" tabIndex="0" role="region" aria-label="點陣證明，可橫向捲動；綠色原件與藍色副本">
+      <svg className="proof-unit-svg" width={proof ? Math.max(260, start + columns * gap + 12) : Math.max(300, secondOrigin + n * gap + 22)} height={n * gap + 28} role="img" aria-label={proof ? `${n} 行，每行 ${columns} 點，合共 ${n * columns} 點` : `第一份 ${original.length} 點，第二份 ${copy.length} 點`}>
         {original.map(({ row, col }) => <circle key={`a${row}:${col}`} className="proof-fill-base" cx={start + col * gap} cy={26 + row * gap} r="6"/>)}
         <g className="proof-moving" style={{ transform }}>{copy.map(({ row, col }) => <circle key={`b${row}:${col}`} className="proof-fill-copy" cx={col * gap} cy={row * gap} r="6"/>)}</g>
-        {proof && Array.from({ length: n }, (_, row) => <text key={row} x={start + columns * gap + 14} y={30 + row * gap} className="proof-svg-label">{row + 1} + {columns - row - 1} = {columns}</text>)}
-        <text x={start} y={n * gap + 51} className="proof-svg-label">{proof ? `${n} 行 × ${columns} 點；點數與顏色全程不變` : '向右捲動看第二份；每個點都會保留'}</text>
       </svg>
     </div>
+    <p className="proof-scale-note">{proof ? `${n} 行 × ${columns} 點；點數與顏色全程不變` : '向右捲動看第二份；每個點都會保留'}</p>
+    {proof && <details className="proof-data"><summary>逐行檢查：為甚麼每行一樣多？</summary><div className="proof-row-counts">{Array.from({ length: n }, (_, row) => <span key={row}>第 {row + 1} 行：{row + 1} + {columns - row - 1} = {columns}</span>)}</div></details>}
     <Legend items={[[ 'base', `T${n}：${original.length} 點` ], [ 'copy', `T${adjacent ? n - 1 : n}：${copy.length} 點（藍色副本）` ]]}/>
     <Equation>{adjacent ? `${original.length} + ${copy.length} = ${n} × ${n} = ${n * n}` : `2 × T${n} = ${n} × ${n + 1} = ${n * (n + 1)}；T${n} = ${c.last}`}</Equation>
     <p className="proof-reason">{adjacent ? '綠色每行 k 點，藍色補 n−k 點，每行都是 n 點。T₀ = 0，故 n=1 也成立。' : '第 k 行有 k 個綠點與 n+1−k 個藍點，每行總是 n+1 點。兩份一樣大，除以 2 才是一份。'}</p>

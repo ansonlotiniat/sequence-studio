@@ -26,7 +26,10 @@ export default function Lab({ lesson, c, setParams, view, setView, proof, setPro
   useEffect(() => { setSelected(null); }, [p.n]);
   useEffect(() => { onSelectionChange?.(focused === null ? null : focused + 1); }, [focused, onSelectionChange]);
 
-  function changeView(next) { setPlaying(false); setSelected(null); setProof(false); setView(next); }
+  function changeView(next) {
+    if (next === view) return;
+    setPlaying(false); setSelected(null); setProof(false); setView(next);
+  }
   function togglePlayback() {
     if (playing) { setPlaying(false); return; }
     if (p.n === 12) setParams(v => ({ ...v, n: 1 }));

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { arithmeticPairTotal } from '../math.js';
 import { squareTiles, triangleCopies, shiftedTerms, visualFormat as f } from './proofModels.js';
+import { ArithmeticPicture, GeometricPicture } from './SequencePictures.jsx';
 
 export function Legend({ items }) {
   return <ul className="proof-legend" aria-label="圖例">{items.map(([color, text]) => <li key={text}><i className={`proof-key ${color}`} aria-hidden="true"/>{text}</li>)}</ul>;
@@ -71,6 +72,8 @@ export function ArithmeticProof({ c, selected, setSelected }) {
   const sum = c.sum;
   const decimal = !Number.isInteger(p.a) || !Number.isInteger(p.d);
   return <div className="proof-scene" data-proof="arithmetic">
+    <ArithmeticPicture key={JSON.stringify(p)} c={c}/>
+    <h4>數值核對</h4>
     <div className="proof-heading"><h3>倒寫一次，每一對都一樣嗎？</h3><p>先預測首尾和，再用下方按鈕揭開每一對。</p></div>
     <TermPicker values={values} selected={k} onSelect={setSelected} formatValue={String}/>
     <p className="proof-reason">{k === 0 ? '第 1 項是起點，還沒有前一項；這裡不需要 a₀。' : `a${k + 1} − a${k} = d；本次公差 d = ${String(p.d)}`}</p>
@@ -91,6 +94,8 @@ export function GeometricProof({ c }) {
   const [reveal, setReveal] = useState(false);
   const p = c.params, columns = shiftedTerms(c.values, p.r);
   return <div className="proof-scene" data-proof="geometric">
+    <GeometricPicture key={JSON.stringify(p)} c={c}/>
+    <h4>錯位相減數值核對</h4>
     <div className="proof-heading"><h3>乘一次，再把同一項對齊</h3><p>先找兩行相同的位置：相減後，哪些項沒有對手？</p></div>
     <div className="proof-scroll" tabIndex="0" role="region" aria-label="等比數列錯位相減表"><table className="proof-table"><thead><tr><th scope="col">次方</th>{columns.map((_, i) => <th scope="col" key={i}>{i === 0 ? 'a₁' : `a₁r${i === 1 ? '' : `^${i}`}`}</th>)}</tr></thead><tbody>
       <tr><th scope="row">Sₙ</th>{columns.map((v, i) => <td className={reveal && i > 0 && i < p.n ? 'proof-cancel' : 'source-a'} key={i}>{i < p.n ? f(v.original) : '—'}</td>)}</tr>

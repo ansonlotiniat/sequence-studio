@@ -47,3 +47,49 @@ export function chartDomain(values) {
   const margin = (max - min) * 0.12;
   return [min - margin, max + margin];
 }
+
+export function arithmeticPicture(values, first) {
+  const height = values[0] + values.at(-1);
+  const positive = values.every(v => v > 0);
+  const unitBlocks = positive && values.every(Number.isInteger);
+  const cells = [];
+  if (unitBlocks) values.forEach((value, col) => {
+    for (let row = 0; row < value; row++) {
+      cells.push({ copy: 0, col, row, sourceCol: col, sourceRow: row, base: row < first });
+      cells.push({ copy: 1, col: values.length - col - 1, row: height - row - 1,
+        sourceCol: col, sourceRow: row, base: row < first });
+    }
+  });
+  return { height, positive, unitBlocks, cells };
+}
+
+export function geometricAreas(n, ratio) {
+  if (!(ratio > 0 && ratio < 1)) return { pieces: [], remaining: null };
+  const pieces = [];
+  let x = 0, y = 0, width = 1, height = 1;
+  for (let k = 0; k < n; k++) {
+    if (k % 2 === 0) {
+      const cut = width * (1 - ratio);
+      pieces.push({ k: k + 1, x, y, width: cut, height });
+      x += cut; width *= ratio;
+    } else {
+      const cut = height * (1 - ratio);
+      pieces.push({ k: k + 1, x, y, width, height: cut });
+      y += cut; height *= ratio;
+    }
+  }
+  return { pieces, remaining: { x, y, width, height } };
+}
+
+export function signedLogScale(values) {
+  const logs = values.filter(v => v !== 0).map(v => Math.log10(Math.abs(v)));
+  const origin = logs.length ? Math.floor(Math.min(...logs)) : 0;
+  return { origin, map: value => value === 0 ? 0 : Math.sign(value) * (Math.log10(Math.abs(value)) - origin + 1) };
+}
+
+export function cancellationBlocks(values, ratio) {
+  return [
+    ...values.map((value, col) => ({ row: 0, col, value, cancels: col > 0 })),
+    ...values.map((value, i) => ({ row: 1, col: i + 1, value: value * ratio, cancels: i < values.length - 1 })),
+  ];
+}

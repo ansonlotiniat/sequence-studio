@@ -99,3 +99,35 @@ export function cancellationBlocks(values, ratio) {
     ...values.map((value, i) => ({ row: 1, col: i + 1, value: value * ratio, cancels: i < values.length - 1 })),
   ];
 }
+
+export function squareSumCells(terms, columns = 10) {
+  const cells = [];
+  for (const term of [...new Set(terms)].sort((a, b) => a - b)) {
+    for (let unit = 0; unit < term * term; unit++) {
+      cells.push({ term, unit, row: Math.floor(cells.length / columns), col: cells.length % columns });
+    }
+  }
+  return cells;
+}
+
+// Give each unit square height 1. Larger square layers go underneath smaller ones.
+// Half-unit offsets center layers; no cube is duplicated or stretched.
+export function squareSumTower(terms) {
+  const layers = [...new Set(terms)].sort((a, b) => b - a);
+  const size = layers[0] ?? 0;
+  return layers.flatMap((term, z) => Array.from({ length: term * term }, (_, unit) => ({
+    term, unit, z, x: unit % term + (size - term) / 2,
+    y: Math.floor(unit / term) + (size - term) / 2,
+  })));
+}
+
+// A year is a cash-flow operation, not a deposit's terminal-value index.
+export function annuityLedger(payment, rate, n, due) {
+  const rows = [{ year: 0, opening: 0, interest: 0, balance: 0 }];
+  for (let year = 1; year <= n; year++) {
+    const opening = rows.at(-1).balance;
+    const interest = (opening + (due ? payment : 0)) * rate;
+    rows.push({ year, opening, interest, balance: opening + payment + interest });
+  }
+  return rows;
+}
